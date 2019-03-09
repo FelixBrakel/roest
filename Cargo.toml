@@ -1,0 +1,9 @@
+[package]
+name = "roest"
+version = "0.1.0"
+authors = ["Felix Brakel <felixbrakel@quicknet.nl>"]
+
+[dependencies]
+sdl2 = "0.32.1"
+gl = "0.10.0"
+tobj = "0.1.6"
