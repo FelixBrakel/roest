@@ -5,16 +5,14 @@ extern crate gl;
 mod core_systems;
 mod runtime_systems;
 
-fn main() {
+use std::fs;
 
+fn main() {
     let _sdl = sdl2::init().unwrap();
     let video_subsystem = _sdl.video().unwrap();
-
     let gl_attr = video_subsystem.gl_attr();
-
     gl_attr.set_context_profile(sdl2::video::GLProfile::Core);
     gl_attr.set_context_version(4, 5);
-
     let window = video_subsystem
         .window("Roest", 900, 700)
         .opengl()
