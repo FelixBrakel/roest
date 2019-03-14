@@ -5,7 +5,7 @@ extern crate gl;
 mod core_systems;
 mod runtime_systems;
 
-use std::fs;
+use core_systems::renderer::{Shader, Program};
 
 fn main() {
     let _sdl = sdl2::init().unwrap();
@@ -22,6 +22,12 @@ fn main() {
 
     let gl_context = window.gl_create_context().unwrap();
     let gl = gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const std::os::raw::c_void);
+
+    let vert_shader = Shader::from_file("assets/shaders/basic.vert").unwrap();
+    let frag_shader = Shader::from_file("assets/shaders/basic.frag").unwrap();
+
+    let shader_program = Program::from_shaders(&[vert_shader, frag_shader]).unwrap();
+    shader_program.set_used();
 
     unsafe {
         gl::Viewport(0, 0, 900, 700);
