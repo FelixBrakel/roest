@@ -4,41 +4,43 @@ use super::Shader;
 use core_systems::renderer::create_initialized_cstring;
 
 pub struct Program {
-    id: gl::types::GLuint
+    gl: gl::Gl,
+    id: gl::types::GLuint,
 }
 
 impl Program {
-    pub fn from_shaders(shaders: &[Shader]) -> Result<Program, String>{
+    pub fn from_shaders(gl: &gl::Gl, shaders: &[Shader]) -> Result<Program, String>{
         let id = unsafe {
-            gl::CreateProgram()
+            gl.CreateProgram()
         };
 
         for shader in shaders {
             unsafe {
-                gl::AttachShader(id, shader.id());
+                gl.AttachShader(id, shader.id());
             }
         }
+
         unsafe {
-            gl::LinkProgram(id);
+            gl.LinkProgram(id);
 
         }
 
         let mut success: gl::types::GLint = 1;
 
         unsafe {
-            gl::GetProgramiv(id, gl::LINK_STATUS, &mut success);
+            gl.GetProgramiv(id, gl::LINK_STATUS, &mut success);
         }
 
         if success == 0 {
             let mut len: gl::types::GLint = 0;
             unsafe  {
-                gl::GetProgramiv(id, gl::INFO_LOG_LENGTH, &mut len);
+                gl.GetProgramiv(id, gl::INFO_LOG_LENGTH, &mut len);
             }
 
             let error = create_initialized_cstring(len as usize);
 
             unsafe {
-                gl::GetProgramInfoLog(
+                gl.GetProgramInfoLog(
                     id,
                     len,
                     std::ptr::null_mut(),
@@ -51,17 +53,17 @@ impl Program {
 
         for shader in shaders {
             unsafe {
-                gl::DetachShader(id, shader.id());
+                gl.DetachShader(id, shader.id());
             }
         }
 
-        Ok(Program { id })
+        Ok(Program { gl: gl.clone(), id })
 
     }
 
     pub fn set_used(&self) {
         unsafe {
-            gl::UseProgram(self.id);
+            self.gl.UseProgram(self.id);
         }
     }
 
@@ -73,7 +75,7 @@ impl Program {
 impl Drop for Program {
     fn drop(&mut self) {
         unsafe {
-            gl::DeleteProgram(self.id);
+            self.gl.DeleteProgram(self.id);
         }
     }
 }

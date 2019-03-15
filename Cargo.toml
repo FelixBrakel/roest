@@ -5,5 +5,8 @@ authors = ["Felix Brakel <felixbrakel@quicknet.nl>"]
 
 [dependencies]
 sdl2 = "0.32.1"
-gl = "0.11.0"
+gl = { path = "lib/gl" }
 tobj = "0.1.6"
+
+[features]
+gl_debug = ["gl/debug"]

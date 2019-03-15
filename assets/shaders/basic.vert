@@ -1,8 +1,14 @@
 #version 450
 
-in vec3 position;
-uniform mat4 MVPmatrix;
+layout (location = 0) in vec3 position;
+layout (location = 1) in vec3 color;
+
+out VS_OUTPUT {
+    vec3 color;
+} OUT;
+//uniform mat4 MVPmatrix;
 
 void main() {
-    gl_Position = MVPmatrix * vec4(position, 1.0);
+    gl_Position = vec4(position, 1.0);
+    OUT.color = color;
 }

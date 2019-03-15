@@ -21,19 +21,72 @@ fn main() {
         .unwrap();
 
     let gl_context = window.gl_create_context().unwrap();
-    let gl = gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const std::os::raw::c_void);
-
-    let vert_shader = Shader::from_file("assets/shaders/basic.vert").unwrap();
-    let frag_shader = Shader::from_file("assets/shaders/basic.frag").unwrap();
-
-    let shader_program = Program::from_shaders(&[vert_shader, frag_shader]).unwrap();
-    shader_program.set_used();
+    let gl = gl::Gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const std::os::raw::c_void);
 
     unsafe {
-        gl::Viewport(0, 0, 900, 700);
-        gl::ClearColor(0.3, 0.3, 0.5, 1.0);
+        gl.Viewport(0, 0, 900, 700);
+        gl.ClearColor(0.3, 0.3, 0.5, 1.0);
     }
 
+    let vertices: Vec<f32> = vec![
+        -0.5, -0.5, 0.0,  1.0, 0.0, 0.0,
+        0.5, -0.5, 0.0,   0.0, 1.0, 0.0,
+        0.0, 0.5, 0.0,     0.0, 0.0, 1.0,
+    ];
+    let mut vbo: gl::types::GLuint = 0;
+    unsafe {
+        gl.GenBuffers(1, &mut vbo);
+    }
+
+    unsafe {
+        gl.BindBuffer(gl::ARRAY_BUFFER, vbo);
+        gl.BufferData(
+            gl::ARRAY_BUFFER,
+            (vertices.len() * std::mem::size_of::<f32>()) as gl::types::GLsizeiptr,
+            vertices.as_ptr() as *const gl::types::GLvoid,
+            gl::STATIC_DRAW
+        );
+
+        gl.BindBuffer(gl::ARRAY_BUFFER, 0);
+    }
+
+    let mut vao: gl::types::GLuint = 0;
+    unsafe {
+        gl.GenVertexArrays(1, &mut vao);
+    }
+
+    unsafe {
+        gl.BindVertexArray(vao);
+        gl.BindBuffer(gl::ARRAY_BUFFER, vbo);
+        gl.EnableVertexAttribArray(0);
+        gl.VertexAttribPointer(
+            0,
+            3,
+            gl::FLOAT,
+            gl::FALSE,
+            (6 * std::mem::size_of::<f32>()) as gl::types::GLint,
+            std::ptr::null()
+        );
+        gl.EnableVertexAttribArray(1);
+        gl.VertexAttribPointer(
+            1,
+            3,
+            gl::FLOAT,
+            gl::FALSE,
+            (6 * std::mem::size_of::<f32>()) as gl::types::GLint,
+            (3 * std::mem::size_of::<f32>()) as *const gl::types::GLvoid
+        );
+
+        gl.BindBuffer(gl::ARRAY_BUFFER, 0);
+        gl.BindVertexArray(0);
+    }
+
+    let vert_shader = Shader::from_file(&gl, "assets/shaders/basic.vert").unwrap();
+//    let vert_shader = .unwrap();
+    let frag_shader = Shader::from_file(&gl, "assets/shaders/basic.frag").unwrap();
+
+    let shader_program = Program::from_shaders(&gl, &[vert_shader, frag_shader]).unwrap();
+    shader_program.set_used();
     let mut event_pump = _sdl.event_pump().unwrap();
     'main: loop {
         for event in event_pump.poll_iter() {
@@ -44,7 +97,9 @@ fn main() {
         }
 
         unsafe {
-            gl::Clear(gl::COLOR_BUFFER_BIT);
+            gl.Clear(gl::COLOR_BUFFER_BIT);
+            gl.BindVertexArray(vao);
+            gl.DrawArrays(gl::TRIANGLES, 0, 3)
         }
 
         window.gl_swap_window();
