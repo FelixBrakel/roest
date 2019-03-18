@@ -17,6 +17,3 @@ pub fn read_file_to_cstring<P: AsRef<Path>>(filepath: P) -> Result<CString, NulE
     CString::new(str_buf)
 }
 
-//pub fn read_file_to_buf<P: AsRef<Path>>(filepath: P) {
-//
-//}

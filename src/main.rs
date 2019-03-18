@@ -4,7 +4,6 @@ extern crate gl;
 
 mod core_systems;
 mod runtime_systems;
-
 use core_systems::renderer::{Shader, Program};
 
 fn main() {
