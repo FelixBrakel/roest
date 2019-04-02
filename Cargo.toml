@@ -7,6 +7,7 @@ authors = ["Felix Brakel <felixbrakel@quicknet.nl>"]
 sdl2 = "0.32.1"
 gl = { path = "lib/gl" }
 tobj = "0.1.6"
+walkdir = "2.1"
 
 [features]
 gl_debug = ["gl/debug"]

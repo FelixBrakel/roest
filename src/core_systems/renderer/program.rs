@@ -2,7 +2,7 @@ use gl;
 use std;
 use super::Shader;
 use core_systems::renderer::create_initialized_cstring;
-use core_systems::resource_manager::Resource;
+use std::path::{PathBuf, Path};
 
 pub struct Program {
     gl: gl::Gl,
@@ -61,7 +61,19 @@ impl Program {
         Ok(Program { gl: gl.clone(), id })
     }
 
-    pub fn from_res(gl: &gl::Gl, res: &Resource, name: &str) -> Result<Program, String> {
+    pub fn from_res(gl: &gl::Gl, name: &str) -> Result<Program, String> {
+        const POSSIBLE_EXT: [&str; 2] = [
+            ".vert",
+            ".frag",
+        ];
+
+        let shaders = POSSIBLE_EXT.iter()
+            .map(|file_extension| {
+                Shader::from_relative_root_path(gl, &format!("{}{}", name, file_extension))
+            })
+            .collect::<Result<Vec<Shader>, String>>()?;
+
+        Program::from_shaders(gl, &shaders[..])
 
     }
 
