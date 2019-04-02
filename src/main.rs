@@ -5,6 +5,7 @@ extern crate gl;
 mod core_systems;
 mod runtime_systems;
 use core_systems::renderer::{Shader, Program};
+use core_systems::resource_manager::Resource;
 
 fn main() {
     let _sdl = sdl2::init().unwrap();
@@ -80,11 +81,10 @@ fn main() {
         gl.BindVertexArray(0);
     }
 
-    let vert_shader = Shader::from_file(&gl, "assets/shaders/basic.vert").unwrap();
-//    let vert_shader = .unwrap();
-    let frag_shader = Shader::from_file(&gl, "assets/shaders/basic.frag").unwrap();
+//    let vert_shader = Shader::from_res(&gl, "resources/shaders/basic.vert").unwrap();
+//    let frag_shader = Shader::from_res(&gl, "resources/shaders/basic.frag").unwrap();
 
-    let shader_program = Program::from_shaders(&gl, &[vert_shader, frag_shader]).unwrap();
+    let shader_program = Program::from_res(&gl, &res, "shaders/triangle").unwrap();
     shader_program.set_used();
     let mut event_pump = _sdl.event_pump().unwrap();
     'main: loop {

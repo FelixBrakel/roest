@@ -2,6 +2,7 @@ use gl;
 use std;
 use super::Shader;
 use core_systems::renderer::create_initialized_cstring;
+use core_systems::resource_manager::Resource;
 
 pub struct Program {
     gl: gl::Gl,
@@ -58,6 +59,9 @@ impl Program {
         }
 
         Ok(Program { gl: gl.clone(), id })
+    }
+
+    pub fn from_res(gl: &gl::Gl, res: &Resource, name: &str) -> Result<Program, String> {
 
     }
 

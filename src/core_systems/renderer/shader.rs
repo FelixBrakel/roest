@@ -1,10 +1,11 @@
 use gl;
 use std;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::ffi::CStr;
 use core_systems::file_system as fs;
 use core_systems::renderer::create_initialized_cstring;
-
+use core_systems::resource_manager::{Error as ResError, Resource};
+use core_systems::resource_manager;
 pub struct Shader {
     gl: gl::Gl,
     id: gl::types::GLuint,
@@ -46,8 +47,8 @@ impl Shader {
 
     /// Create a shader from a file.
     /// TODO: Create a fallback shader to be used if an error occurs during the shader creation.
-    pub fn from_file<P: AsRef<Path>>(gl: &gl::Gl, filepath: P) -> Result<Shader, String>{
-        let shader_src = match fs::synchronous::read_file_to_cstring(&filepath) {
+    pub fn from_res(gl: &gl::Gl, res: &Resource, name: &str) -> Result<Shader, String>{
+        let shader_src = match fs::synchronous::read_to_cstring(&filepath) {
             Ok(src) => src,
             Err(err) => return Err(String::from("NulError"))
         };
@@ -70,6 +71,21 @@ impl Shader {
 
     pub fn id(&self) -> gl::types::GLuint {
         self.id
+    }
+}
+
+impl Resource for Shader {
+    //TODO don't hardcode shader root folder
+    const ROOT_PATH: PathBuf = {
+        let bin_file_name = ::std::env::current_exe().map_err(
+            |_| ResError::FailedToGetBinPath
+        )?;
+
+        bin_file_name.parent().ok_or(ResError::FailedToGetBinPath).join("resources/shaders")
+    };
+
+    fn from_relative_root_path<P: AsRef<Path>>(rel_path: P) -> Result<Resource, ResError> {
+
     }
 }
 
