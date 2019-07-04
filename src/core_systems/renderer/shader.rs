@@ -5,13 +5,15 @@ use std::ffi::CStr;
 use core_systems::file_system as fs;
 use core_systems::renderer::create_initialized_cstring;
 use core_systems::resource_manager::{Error as ResError, Resource};
+use core_systems::file_system::synchronous::read_to_cstring;
+
 pub struct Shader {
     gl: gl::Gl,
     id: gl::types::GLuint,
 }
 
 impl Shader {
-    pub fn from_source(gl: &gl::Gl, source: &CStr, kind: gl::types::GLenum) -> Result<Shader, String> {
+    pub fn from_source(gl: &gl::Gl, source: &CStr, kind: gl::types::GLenum) -> Result<Self, String> {
         let id = unsafe {
             gl.CreateShader(kind)
         };
@@ -45,18 +47,20 @@ impl Shader {
     }
 
     /// TODO: Create a fallback shader to be used if an error occurs during the shader creation.
-    pub fn from_relative_root_path<P: AsRef<Path>>(&gl: &gl::Gl, &name: &P) -> Result<Shader, String> {
+    pub fn from_relative_root_path<P: AsRef<Path>>(gl: &gl::Gl, name: &P) -> Result<Shader, String> {
         const POSSIBLE_EXT: [(&str, gl::types::GLenum); 2] = [
             (".vert", gl::VERTEX_SHADER),
             (".frag", gl::FRAGMENT_SHADER),
         ];
-        let name_path = name as &Path;
+
+        let name_path = name.as_ref();
         let shader_kind = POSSIBLE_EXT.iter().find(|&&(file_extension, _)| {
             name_path.ends_with(file_extension)
         })
             .map(|&(_, kind)| kind)
-            .ok_or_else(|| format!("Can not deterine shader type for resource {:?}", name as &str))?;
-        let shader_src = fs::synchronous::read_to_cstring(Shader, &name)?;
+            .ok_or_else(|| format!("Can not deterine shader type for resource {:?}", name_path))?;
+        let shader_src = fs::synchronous::read_to_cstring::<Shader, P>(&name).
+            map_err(|e| format!("Error loading resource {:?}: {:?}", name_path, e))?;;
 
         Shader::from_source(&gl, &shader_src, shader_kind)
     }
@@ -91,14 +95,9 @@ impl Shader {
 }
 
 impl Resource for Shader {
-    ///TODO don't hardcode shader root folder
-    const ROOT_PATH: PathBuf = {
-        let bin_file_name = ::std::env::current_exe().map_err(
-            |_| ResError::FailedToGetBinPath
-        )?;
-
-        bin_file_name.parent().ok_or(ResError::FailedToGetBinPath).join("resources/shaders")
-    };
+    fn load<P: AsRef<Path>>(path: &P) -> Self {
+        read_to_cstring(path)
+    }
 }
 
 impl Drop for Shader {

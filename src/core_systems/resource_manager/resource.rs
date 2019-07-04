@@ -18,15 +18,14 @@ impl From<io::Error> for Error {
 // The file_system mod should act as a library for the structs to easily implement asynchronous
 // file streaming, loading to CStrings, etc. The main function of this trait is to make sure struct
 // have a file root from which relative paths can be build and for the structs to implement custom
-// loading (and unloading?) procedures.
+// loading (and unloading?) procedures. More functionality will sure
 pub trait Resource {
-    const ROOT_PATH: PathBuf;
 //    fn from_relative_root_path<P: AsRef<Path>>(name: P) -> Result<Resource, Error>;
 
     ///Note:
     /// maybe this shouldn't be part of the resource trait? Might be better off moving this to
     /// the file_system mod as a helper function.
-    fn resource_name_to_path<P: AsRef<Path>>(&name: &P) -> PathBuf {
-        return Resource::ROOT_PATH.join(name);
+    fn resource_name_to_path<P: AsRef<Path>>(name: &P) -> PathBuf {
+        return Self::ROOT_PATH.join(name);
     }
 }

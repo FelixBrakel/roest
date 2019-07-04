@@ -11,10 +11,7 @@ pub struct Program {
 
 impl Program {
     pub fn from_shaders(gl: &gl::Gl, shaders: &[Shader]) -> Result<Program, String>{
-        let id = unsafe {
-            gl.CreateProgram()
-        };
-
+        let id = unsafe { gl.CreateProgram() };
         for shader in shaders {
             unsafe {
                 gl.AttachShader(id, shader.id());
@@ -27,7 +24,6 @@ impl Program {
         }
 
         let mut success: gl::types::GLint = 1;
-
         unsafe {
             gl.GetProgramiv(id, gl::LINK_STATUS, &mut success);
         }
@@ -39,7 +35,6 @@ impl Program {
             }
 
             let error = create_initialized_cstring(len as usize);
-
             unsafe {
                 gl.GetProgramInfoLog(
                     id,
