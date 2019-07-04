@@ -21,12 +21,4 @@ impl From<io::Error> for Error {
 // loading (and unloading?) procedures.
 pub trait Resource {
     const ROOT_PATH: PathBuf;
-//    fn from_relative_root_path<P: AsRef<Path>>(name: P) -> Result<Resource, Error>;
-
-    ///Note:
-    /// maybe this shouldn't be part of the resource trait? Might be better off moving this to
-    /// the file_system mod as a helper function.
-    fn resource_name_to_path<P: AsRef<Path>>(&name: &P) -> PathBuf {
-        return Resource::ROOT_PATH.join(name);
-    }
 }
