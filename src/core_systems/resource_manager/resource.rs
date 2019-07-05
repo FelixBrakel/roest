@@ -20,12 +20,5 @@ impl From<io::Error> for Error {
 // have a file root from which relative paths can be build and for the structs to implement custom
 // loading (and unloading?) procedures. More functionality will sure
 pub trait Resource {
-//    fn from_relative_root_path<P: AsRef<Path>>(name: P) -> Result<Resource, Error>;
-
-    ///Note:
-    /// maybe this shouldn't be part of the resource trait? Might be better off moving this to
-    /// the file_system mod as a helper function.
-    fn resource_name_to_path<P: AsRef<Path>>(name: &P) -> PathBuf {
-        return Self::ROOT_PATH.join(name);
-    }
+    fn get_name() -> PathBuf;
 }

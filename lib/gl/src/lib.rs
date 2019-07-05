@@ -1,12 +1,11 @@
 mod bindings {
 //    include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
-mod __gl_imports {
+    mod __gl_imports {
     pub use std::mem;
     pub use std::marker::Send;
     pub use std::os::raw;
 }
-
 
     pub mod types {
         #![allow(non_camel_case_types, non_snake_case, dead_code, missing_copy_implementations)]

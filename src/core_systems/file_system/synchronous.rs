@@ -1,13 +1,9 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::fs;
 use std::io;
 use std::io::Read;
 use std::ffi::{CString};
 use core_systems::resource_manager::{Resource, Error as ResError};
-
-fn resource_name_to_path<P: AsRef<Path>>(name: &P) -> PathBuf {
-    return Self::ROOT_PATH.join(name);
-}
 
 pub fn read_to_string<R: Resource, P: AsRef<Path>>(res: &R,
                                                    res_name: &P) -> Result<String, io::Error> {
