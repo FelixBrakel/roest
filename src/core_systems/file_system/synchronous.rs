@@ -1,3 +1,8 @@
+/**
+ * Synchronous file system API, as the name implies this version only contains blocking calls so it
+ * should probably only be used during startup and not runtime.
+ **/
+
 use std::path::{Path, PathBuf};
 use std::fs;
 use std::io;
