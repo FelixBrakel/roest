@@ -20,5 +20,5 @@ impl From<io::Error> for Error {
 // have a file root from which relative paths can be build and for the structs to implement custom
 // loading (and unloading?) procedures. More functionality will sure
 pub trait Resource {
-    fn get_name() -> PathBuf;
+    fn get_path(self) -> PathBuf;
 }

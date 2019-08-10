@@ -10,6 +10,7 @@ use core_systems::file_system::synchronous::read_to_cstring;
 pub struct Shader {
     gl: gl::Gl,
     id: gl::types::GLuint,
+    path: AsRef<PathBuf>,
 }
 
 impl Shader {
@@ -43,7 +44,7 @@ impl Shader {
             return Err(error.to_string_lossy().into_owned());
         }
 
-        Ok(Shader { gl: gl.clone(),  id })
+        Ok(Shader { gl: gl.clone(), id: id, path: source.to_str().unwrap() })
     }
 
     /// TODO: Create a fallback shader to be used if an error occurs during the shader creation.
@@ -95,9 +96,7 @@ impl Shader {
 }
 
 impl Resource for Shader {
-    fn load<P: AsRef<Path>>(path: &P) -> Self {
-        read_to_cstring(path)
-    }
+    fn get_path(self) { self.path }
 }
 
 impl Drop for Shader {
