@@ -69,7 +69,6 @@ impl Program {
             .collect::<Result<Vec<Shader>, String>>()?;
 
         Program::from_shaders(gl, &shaders[..])
-
     }
 
     pub fn set_used(&self) {
