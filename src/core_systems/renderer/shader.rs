@@ -1,20 +1,27 @@
-use gl;
 use std;
-use std::path::{Path, PathBuf};
+use std::path::{Path,};
 use std::ffi::CStr;
-use core_systems::file_system as fs;
 use core_systems::renderer::create_initialized_cstring;
-use core_systems::resource_manager::{Error as ResError, Resource};
+use core_systems::resource_manager::{Resource,};
 use core_systems::file_system::synchronous::read_to_cstring;
+
+#[derive(Debug, Fail)]
+pub enum Error {
+    #[fail(display = "Failed to load resource {}", name)]
+    ResourceLoad { name: String, inner: failure::Error },
+    #[fail(display = "Can not determine shader type for resource {}", name)]
+    CanNotDetermineShaderTypeForResource { name: String },
+    #[fail(display = "Failed to compile shader {}: {}", name, message)]
+    CompileError { name: String, message: String },
+}
 
 pub struct Shader {
     gl: gl::Gl,
     id: gl::types::GLuint,
-    path: AsRef<PathBuf>,
 }
 
 impl Shader {
-    pub fn from_source(gl: &gl::Gl, source: &CStr, kind: gl::types::GLenum) -> Result<Self, String> {
+    fn load_source(gl: &gl::Gl, source: &CStr, kind: gl::types::GLenum) -> Result<Shader, String> {
         let id = unsafe {
             gl.CreateShader(kind)
         };
@@ -44,51 +51,9 @@ impl Shader {
             return Err(error.to_string_lossy().into_owned());
         }
 
-        Ok(Shader { gl: gl.clone(), id: id, path: source.to_str().unwrap() })
+
+        Ok(Shader { gl: gl.clone(), id: id })
     }
-
-    /// TODO: Create a fallback shader to be used if an error occurs during the shader creation.
-    pub fn from_relative_root_path<P: AsRef<Path>>(gl: &gl::Gl, name: &P) -> Result<Shader, String> {
-        const POSSIBLE_EXT: [(&str, gl::types::GLenum); 2] = [
-            (".vert", gl::VERTEX_SHADER),
-            (".frag", gl::FRAGMENT_SHADER),
-        ];
-
-        let name_path = name.as_ref();
-        let shader_kind = POSSIBLE_EXT.iter().find(|&&(file_extension, _)| {
-            name_path.ends_with(file_extension)
-        })
-            .map(|&(_, kind)| kind)
-            .ok_or_else(|| format!("Can not deterine shader type for resource {:?}", name_path))?;
-        let shader_src = fs::synchronous::read_to_cstring::<Shader, P>(&name).
-            map_err(|e| format!("Error loading resource {:?}: {:?}", name_path, e))?;;
-
-        Shader::from_source(&gl, &shader_src, shader_kind)
-    }
-
-
-    /// Create a shader from a file.
-//    pub fn from_file(gl: &gl::Gl, name: &str) -> Result<Shader, String>{
-//        let shader_src = match fs::synchronous::read_to_cstring(&filepath) {
-//            Ok(src) => src,
-//            Err(err) => return Err(String::from("NulError"))
-//        };
-//
-//        let path = filepath.as_ref();
-//        let kind = match path.extension() {
-//            Some(v) => {
-//                match v.to_str() {
-//                    Some("frag") => gl::FRAGMENT_SHADER,
-//                    Some("vert") => gl::VERTEX_SHADER,
-//                    _ => return Err(String::from("Could not match file extension"))
-//                }
-//            },
-//            None => {
-//                return Err(String::from("error in determining file extension"));
-//            },
-//        };
-//        Shader::from_source(gl, &shader_src, kind)
-//    }
 
     pub fn id(&self) -> gl::types::GLuint {
         self.id
@@ -96,7 +61,25 @@ impl Shader {
 }
 
 impl Resource for Shader {
-    fn get_path(self) { self.path }
+    fn load(gl: &gl::Gl, name: &AsRef<Path>) -> Result<Shader, Error> {
+        const POSSIBLE_EXT: [(&str, gl::types::GLenum); 2] = [
+            (".vert", gl::VERTEX_SHADER),
+            (".frag", gl::FRAGMENT_SHADER),
+        ];
+
+        let name_path = name.as_ref();
+        let shader_kind = POSSIBLE_EXT
+            .iter()
+            .find(|&&(file_extension, _)| { name_path.ends_with(file_extension) })
+            .map(|&(_, kind)| kind)
+            .ok_or_else(|| Error::CanNotDetermineShaderTypeForResource { name: name_path })?;
+
+        let shader_src = read_to_cstring(&name)
+            .map_err(|e| Error::ResourceLoad { name: name, inner: e })?;
+
+        Self::load_source(gl, &shader_src, shader_kind)
+            .map_err(|message| Error::CompileError { name: name, message })
+    }
 }
 
 impl Drop for Shader {

@@ -1,10 +1,13 @@
 extern crate sdl2;
 extern crate tobj;
 extern crate gl;
+#[macro_use]
+extern crate failure;
 
 mod core_systems;
 mod runtime_systems;
-use core_systems::renderer::{Shader, Program};
+use core_systems::renderer::{Program,};
+use core_systems::resource_manager::load_resource;
 
 fn main() {
     let _sdl = sdl2::init().unwrap();
@@ -82,8 +85,7 @@ fn main() {
 
 //    let vert_shader = Shader::from_res(&gl, "resources/shaders/basic.vert").unwrap();
 //    let frag_shader = Shader::from_res(&gl, "resources/shaders/basic.frag").unwrap();
-
-    let shader_program = Program::from_res(&gl, "basic").unwrap();
+    let shader_program = load_resource::<Program>(&gl, "shaders/basic");
     shader_program.set_used();
     let mut event_pump = _sdl.event_pump().unwrap();
     'main: loop {
@@ -101,6 +103,30 @@ fn main() {
         }
 
         window.gl_swap_window();
-
     }
+}
+
+pub fn failure_to_string<E: failure::Fail>(e: E) -> String {
+    use std::fmt::Write;
+
+    let mut result = String::new();
+    for (i, cause) in e.iter_chain().collect::<Vec<_>>().into_iter().rev().enumerate() {
+        if i > 0 {
+            let _ = writeln!(&mut result, "  Which caused the following issue:");
+        }
+
+        let _ = write!(&mut result, "{}", cause);
+        if let Some(backtrace) = cause.backtrace() {
+            let bracktrace_str = format!("{}", backtrace);
+            if bracktrace_str.len() > 0 {
+                let _ = writeln!(&mut result,  " This happened at {}", backtrace);
+            } else {
+                let _ = writeln!(&mut result);
+            }
+        } else {
+            let _ = writeln!(&mut result);
+        }
+    }
+
+    result
 }

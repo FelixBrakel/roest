@@ -4,10 +4,13 @@ version = "0.1.0"
 authors = ["Felix Brakel <felixbrakel@quicknet.nl>"]
 
 [dependencies]
-sdl2 = "0.32.1"
+failure = "0.1.5"
+sdl2 = "0.32.2"
 gl = { path = "lib/gl" }
-tobj = "0.1.6"
-walkdir = "2.1"
+tobj = "0.1.10"
+
+[build-dependencies]
+walkdir = "2.2.9"
 
 [features]
 gl_debug = ["gl/debug"]

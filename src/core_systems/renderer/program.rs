@@ -2,7 +2,14 @@ use gl;
 use std;
 use super::Shader;
 use core_systems::renderer::create_initialized_cstring;
-use std::path::{PathBuf, Path};
+use std::path::{Path,};
+use core_systems::resource_manager::Resource;
+
+#[derive(Debug, Fail)]
+pub enum Error {
+    #[fail(display = "Failed to link program {}: {}", name, message)]
+    LinkError {name: String, message: String},
+}
 
 pub struct Program {
     gl: gl::Gl,
@@ -10,7 +17,7 @@ pub struct Program {
 }
 
 impl Program {
-    pub fn from_shaders(gl: &gl::Gl, shaders: &[Shader]) -> Result<Program, String>{
+    fn load_shaders(gl: &gl::Gl, shaders: &[Shader]) -> Result<Self, String>{
         let id = unsafe { gl.CreateProgram() };
         for shader in shaders {
             unsafe {
@@ -20,7 +27,6 @@ impl Program {
 
         unsafe {
             gl.LinkProgram(id);
-
         }
 
         let mut success: gl::types::GLint = 1;
@@ -52,11 +58,18 @@ impl Program {
                 gl.DetachShader(id, shader.id());
             }
         }
-
-        Ok(Program { gl: gl.clone(), id })
+        Ok(Program { gl: gl.clone(), id: id })
     }
 
-    pub fn from_res(gl: &gl::Gl, name: &str) -> Result<Program, String> {
+    pub fn set_used(&self) {
+        unsafe {
+            self.gl.UseProgram(self.id);
+        }
+    }
+}
+
+impl Resource for Program {
+    fn load(gl: &gl::Gl, name: &AsRef<Path>) -> Result<Program, Error> {
         const POSSIBLE_EXT: [&str; 2] = [
             ".vert",
             ".frag",
@@ -68,17 +81,8 @@ impl Program {
             })
             .collect::<Result<Vec<Shader>, String>>()?;
 
-        Program::from_shaders(gl, &shaders[..])
-    }
-
-    pub fn set_used(&self) {
-        unsafe {
-            self.gl.UseProgram(self.id);
-        }
-    }
-
-    pub fn id(&self) -> gl::types::GLuint {
-        self.id
+        Self::load_shaders(gl, &shaders[..])
+            .map_err(|message| Error::LinkError {name: name.into(), message })
     }
 }
 
