@@ -1,4 +1,5 @@
 use std::path::{Path, PathBuf};
+use failure::Fail;
 use std::io;
 
 pub mod synchronous;

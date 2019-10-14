@@ -6,6 +6,7 @@ use crate::core_systems::renderer::create_initialized_cstring;
 use std::path::{Path, PathBuf};
 use crate::core_systems::resource_manager::{Resource, ResError};
 use crate::core_systems::resource_manager::load_resource;
+use failure::Fail;
 
 #[derive(Debug, Fail)]
 pub enum Error {
