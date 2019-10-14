@@ -1,11 +1,11 @@
 use gl;
 use std;
 use std::fmt;
-use core_systems::renderer::shader::{Shader, Error as ShaderError};
-use core_systems::renderer::create_initialized_cstring;
+use crate::core_systems::renderer::shader::{Shader, Error as ShaderError};
+use crate::core_systems::renderer::create_initialized_cstring;
 use std::path::{Path, PathBuf};
-use core_systems::resource_manager::{Resource, ResError};
-use core_systems::resource_manager::load_resource;
+use crate::core_systems::resource_manager::{Resource, ResError};
+use crate::core_systems::resource_manager::load_resource;
 
 #[derive(Debug, Fail)]
 pub enum Error {

@@ -7,7 +7,7 @@ use std::path::{Path,};
 use std::fs;
 use std::io::Read;
 use std::ffi::{CString};
-use core_systems::file_system::{file_name_to_path, Error};
+use crate::core_systems::file_system::{file_name_to_path, Error};
 
 pub fn read_to_cstring(res_name: impl AsRef<Path>) -> Result<CString, Error> {
     let full_path = file_name_to_path(res_name)?;

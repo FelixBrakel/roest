@@ -8,8 +8,8 @@ mod core_systems;
 mod runtime_systems;
 
 //use failure::err_msg;
-use core_systems::renderer::{Program,};
-use core_systems::resource_manager::{load_resource,};
+use crate::core_systems::renderer::{Program,};
+use crate::core_systems::resource_manager::{load_resource,};
 use failure::err_msg;
 
 fn main() {

@@ -1,10 +1,10 @@
 use std;
 use std::path::{Path, PathBuf};
 use std::ffi::CStr;
-use core_systems::renderer::create_initialized_cstring;
-use core_systems::resource_manager::{Resource, ResError};
-use core_systems::file_system::synchronous::{read_to_cstring,};
-use core_systems::file_system::{Error as FsError};
+use crate::core_systems::renderer::create_initialized_cstring;
+use crate::core_systems::resource_manager::{Resource, ResError};
+use crate::core_systems::file_system::synchronous::{read_to_cstring,};
+use crate::core_systems::file_system::{Error as FsError};
 use failure::Fail;
 use std::fmt;
 
