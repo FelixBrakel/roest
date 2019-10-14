@@ -6,12 +6,21 @@ extern crate failure;
 
 mod core_systems;
 mod runtime_systems;
+
+//use failure::err_msg;
 use core_systems::renderer::{Program,};
-use core_systems::resource_manager::load_resource;
+use core_systems::resource_manager::{load_resource,};
+use failure::err_msg;
 
 fn main() {
-    let _sdl = sdl2::init().unwrap();
-    let video_subsystem = _sdl.video().unwrap();
+    if let Err(e) = run() {
+        println!("{}", failure_to_string(e));
+    }
+}
+
+fn run() -> Result<(), failure::Error> {
+    let sdl = sdl2::init().map_err(err_msg)?;
+    let video_subsystem = sdl.video().map_err(err_msg)?;
     let gl_attr = video_subsystem.gl_attr();
     gl_attr.set_context_profile(sdl2::video::GLProfile::Core);
     gl_attr.set_context_version(4, 5);
@@ -22,7 +31,7 @@ fn main() {
         .build()
         .unwrap();
 
-    let gl_context = window.gl_create_context().unwrap();
+    let _gl_context = window.gl_create_context().map_err(err_msg)?;
     let gl = gl::Gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const std::os::raw::c_void);
 
     unsafe {
@@ -85,9 +94,9 @@ fn main() {
 
 //    let vert_shader = Shader::from_res(&gl, "resources/shaders/basic.vert").unwrap();
 //    let frag_shader = Shader::from_res(&gl, "resources/shaders/basic.frag").unwrap();
-    let shader_program = load_resource::<Program>(&gl, "shaders/basic");
+    let shader_program: Program = load_resource(&gl, "resources/shaders/basic")?;
     shader_program.set_used();
-    let mut event_pump = _sdl.event_pump().unwrap();
+    let mut event_pump = sdl.event_pump().map_err(err_msg)?;
     'main: loop {
         for event in event_pump.poll_iter() {
             match event {
@@ -104,13 +113,21 @@ fn main() {
 
         window.gl_swap_window();
     }
+
+    Ok(())
 }
 
-pub fn failure_to_string<E: failure::Fail>(e: E) -> String {
+pub fn failure_to_string(e: failure::Error) -> String {
     use std::fmt::Write;
 
     let mut result = String::new();
-    for (i, cause) in e.iter_chain().collect::<Vec<_>>().into_iter().rev().enumerate() {
+    for (i, cause) in e
+        .iter_chain()
+        .collect::<Vec<_>>()
+        .into_iter()
+        .rev()
+        .enumerate()
+    {
         if i > 0 {
             let _ = writeln!(&mut result, "  Which caused the following issue:");
         }

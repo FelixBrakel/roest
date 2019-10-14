@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Felix Brakel <felixbrakel@quicknet.nl>"]
 
 [dependencies]
-failure = "0.1.5"
+failure = "0.1"
 sdl2 = "0.32.2"
 gl = { path = "lib/gl" }
 tobj = "0.1.10"

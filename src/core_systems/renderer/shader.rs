@@ -1,19 +1,34 @@
 use std;
-use std::path::{Path,};
+use std::path::{Path, PathBuf};
 use std::ffi::CStr;
 use core_systems::renderer::create_initialized_cstring;
-use core_systems::resource_manager::{Resource,};
-use core_systems::file_system::synchronous::read_to_cstring;
+use core_systems::resource_manager::{Resource, ResError};
+use core_systems::file_system::synchronous::{read_to_cstring,};
+use core_systems::file_system::{Error as FsError};
+use failure::Fail;
+use std::fmt;
 
 #[derive(Debug, Fail)]
 pub enum Error {
-    #[fail(display = "Failed to load resource {}", name)]
-    ResourceLoad { name: String, inner: failure::Error },
-    #[fail(display = "Can not determine shader type for resource {}", name)]
-    CanNotDetermineShaderTypeForResource { name: String },
-    #[fail(display = "Failed to compile shader {}: {}", name, message)]
-    CompileError { name: String, message: String },
+//    #[fail(display = "Failed to load resource {}", name)]
+    ResourceLoad { name: PathBuf, #[cause] inner: FsError },
+//    #[fail(display = "Can not determine shader type for resource {}", name)]
+    CanNotDetermineShaderTypeForResource { name: PathBuf },
+//    #[fail(display = "Failed to compile shader {}: {}", name, message)]
+    CompileError { name: PathBuf, message: String },
 }
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Error::ResourceLoad { name, inner: _ } => write!(f, "Failed to load resource {}", name.display()),
+            Error::CanNotDetermineShaderTypeForResource { name } => write!(f, "Can not determine shader type for resource {}", name.display()),
+            Error::CompileError { name, message } => write!(f, "Failed to compile shader {}: {}", name.display(), message)
+        }
+    }
+}
+
+impl ResError for Error {}
 
 pub struct Shader {
     gl: gl::Gl,
@@ -61,24 +76,27 @@ impl Shader {
 }
 
 impl Resource for Shader {
-    fn load(gl: &gl::Gl, name: &AsRef<Path>) -> Result<Shader, Error> {
-        const POSSIBLE_EXT: [(&str, gl::types::GLenum); 2] = [
-            (".vert", gl::VERTEX_SHADER),
-            (".frag", gl::FRAGMENT_SHADER),
-        ];
+    type E = Error;
 
+    fn load(gl: &gl::Gl, name: impl AsRef<Path>) -> Result<Shader, Error> {
         let name_path = name.as_ref();
-        let shader_kind = POSSIBLE_EXT
-            .iter()
-            .find(|&&(file_extension, _)| { name_path.ends_with(file_extension) })
-            .map(|&(_, kind)| kind)
-            .ok_or_else(|| Error::CanNotDetermineShaderTypeForResource { name: name_path })?;
+
+        let shader_kind = match name_path.extension() {
+            None => return Err(Error::CanNotDetermineShaderTypeForResource { name: name_path.to_path_buf() }),
+            Some(ext) => {
+                match ext.to_str() {
+                    Some("vert") => gl::VERTEX_SHADER,
+                    Some("frag") => gl::FRAGMENT_SHADER,
+                    _ => return Err(Error::CanNotDetermineShaderTypeForResource { name: name_path.to_path_buf() })
+                }
+            }
+        };
 
         let shader_src = read_to_cstring(&name)
-            .map_err(|e| Error::ResourceLoad { name: name, inner: e })?;
+            .map_err(|e| Error::ResourceLoad { name: name_path.to_path_buf(), inner: e })?;
 
         Self::load_source(gl, &shader_src, shader_kind)
-            .map_err(|message| Error::CompileError { name: name, message })
+            .map_err(|message| Error::CompileError { name: name_path.to_path_buf(), message })
     }
 }
 
