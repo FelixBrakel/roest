@@ -3,12 +3,16 @@ name = "roest"
 version = "0.1.0"
 authors = ["Felix Brakel <felixbrakel@quicknet.nl>"]
 edition = "2018"
+publish = false
+
+[workspace]
 
 [dependencies]
 failure = "0.1"
 sdl2 = "0.32.2"
 gl = { path = "lib/gl" }
 tobj = "0.1.10"
+renderer_derive = { path = "lib/renderer_derive" }
 
 [build-dependencies]
 walkdir = "2.2.9"

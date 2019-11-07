@@ -2,10 +2,10 @@ use gl;
 use std;
 use std::fmt;
 use crate::core_systems::renderer::shader::{Shader, Error as ShaderError};
-use crate::core_systems::renderer::create_initialized_cstring;
 use std::path::{Path, PathBuf};
 use crate::core_systems::resource_manager::{Resource, ResError};
 use crate::core_systems::resource_manager::load_resource;
+use crate::core_systems::file_system::synchronous::{create_initialized_cstring};
 use failure::Fail;
 
 #[derive(Debug, Fail)]
@@ -17,8 +17,10 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Error::LinkError { name, message } => write!(f, "Failed to link program {}: {}", name.display(), message),
-            Error::ShaderError { name, inner: _ } => write!(f, "Failed to compile shader {}", name.display())
+            Error::LinkError { name, message } =>
+                write!(f, "Failed to link program {}: {}", name.display(), message),
+            Error::ShaderError { name, inner: _ } =>
+                write!(f, "Failed to compile shader {}", name.display())
         }
     }
 }

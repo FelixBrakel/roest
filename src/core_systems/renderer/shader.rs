@@ -1,9 +1,8 @@
 use std;
 use std::path::{Path, PathBuf};
 use std::ffi::CStr;
-use crate::core_systems::renderer::create_initialized_cstring;
 use crate::core_systems::resource_manager::{Resource, ResError};
-use crate::core_systems::file_system::synchronous::{read_to_cstring,};
+use crate::core_systems::file_system::synchronous::{read_to_cstring, create_initialized_cstring};
 use crate::core_systems::file_system::{Error as FsError};
 use failure::Fail;
 use std::fmt;
@@ -21,9 +20,12 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Error::ResourceLoad { name, inner: _ } => write!(f, "Failed to load resource {}", name.display()),
-            Error::CanNotDetermineShaderTypeForResource { name } => write!(f, "Can not determine shader type for resource {}", name.display()),
-            Error::CompileError { name, message } => write!(f, "Failed to compile shader {}: {}", name.display(), message)
+            Error::ResourceLoad { name, inner: _ } =>
+                write!(f, "Failed to load resource {}", name.display()),
+            Error::CanNotDetermineShaderTypeForResource { name } =>
+                write!(f, "Can not determine shader type for resource {}", name.display()),
+            Error::CompileError { name, message } =>
+                write!(f, "Failed to compile shader {}: {}", name.display(), message)
         }
     }
 }
