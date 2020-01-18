@@ -13,6 +13,7 @@ sdl2 = "0.32.2"
 gl = { path = "lib/gl" }
 tobj = "0.1.10"
 renderer_derive = { path = "lib/renderer_derive" }
+vec-2-10-10-10 = "0.1.2"
 
 [build-dependencies]
 walkdir = "2.2.9"
