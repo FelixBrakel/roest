@@ -78,7 +78,6 @@ fn run() -> Result<(), failure::Error> {
         gl.BindBuffer(gl::ARRAY_BUFFER, 0);
         gl.BindVertexArray(0);
     }
-
 //    let vert_shader = Shader::from_res(&gl, "resources/shaders/basic.vert").unwrap();
 //    let frag_shader = Shader::from_res(&gl, "resources/shaders/basic.frag").unwrap();
     let shader_program: Program = load_resource(&gl, "resources/shaders/basic")?;
