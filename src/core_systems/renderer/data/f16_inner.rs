@@ -124,7 +124,7 @@ impl f16_f16_f16_f16 {
     }
 }
 
-impl VertexData for    d3 {
+impl VertexData for f16_f16_f16_f16 {
     unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
         gl.EnableVertexAttribArray(location as gl::types::GLuint);
         gl.VertexAttribPointer(

@@ -4,7 +4,7 @@ use failure::err_msg;
 mod core_systems;
 mod runtime_systems;
 
-use crate::core_systems::renderer::{Program, data, data::VertexData};
+use crate::core_systems::renderer::{Program, data, data::VertexData, buffer};
 use crate::core_systems::resource_manager::{load_resource,};
 
 #[derive(Copy, Clone, Debug, VertexAttribPointers)]
@@ -38,49 +38,31 @@ fn run() -> Result<(), failure::Error> {
     let _gl_context = window.gl_create_context().map_err(err_msg)?;
     let gl = gl::Gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const std::os::raw::c_void);
 
-    unsafe {
-        gl.Viewport(0, 0, 900, 700);
-        gl.ClearColor(0.3, 0.3, 0.5, 1.0);
-    }
-
     let vertices: Vec<Vertex> = vec![
         Vertex { pos: (-0.5, -0.5, 0.0).into(), clr: (1.0, 0.0, 0.0, 1.0).into() },
         Vertex { pos: (0.5, -0.5, 0.0).into(), clr: (0.0, 1.0, 0.0, 1.0).into() },
         Vertex { pos: (0.0, 0.5, 0.0).into(), clr: (0.0, 0.0, 1.0, 1.0).into() },
     ];
-    let mut vbo: gl::types::GLuint = 0;
-    unsafe {
-        gl.GenBuffers(1, &mut vbo);
-    }
+    let vbo = buffer::ArrayBuffer::new(&gl);
 
-    unsafe {
-        gl.BindBuffer(gl::ARRAY_BUFFER, vbo);
-        gl.BufferData(
-            gl::ARRAY_BUFFER,
-            (vertices.len() * std::mem::size_of::<Vertex>()) as gl::types::GLsizeiptr,
-            vertices.as_ptr() as *const gl::types::GLvoid,
-            gl::STATIC_DRAW
-        );
+    vbo.bind();
+    vbo.static_draw_data(&vertices);
+    vbo.unbind();
 
-        gl.BindBuffer(gl::ARRAY_BUFFER, 0);
-    }
-
-    let mut vao: gl::types::GLuint = 0;
-    unsafe {
-        gl.GenVertexArrays(1, &mut vao);
-        gl.BindVertexArray(vao);
-        gl.BindBuffer(gl::ARRAY_BUFFER, vbo);
-    }
-
+    let mut vao = buffer::VertexArray::new(&gl);
+    vao.bind();
+    vbo.bind();
     Vertex::vertex_attrib_pointers(&gl);
+    vbo.unbind();
+    vao.unbind();
 
     unsafe {
-        gl.BindBuffer(gl::ARRAY_BUFFER, 0);
-        gl.BindVertexArray(0);
+        gl.Viewport(0, 0, 900, 700);
+        gl.ClearColor(0.3, 0.3, 0.5, 1.0);
     }
-//    let vert_shader = Shader::from_res(&gl, "resources/shaders/basic.vert").unwrap();
-//    let frag_shader = Shader::from_res(&gl, "resources/shaders/basic.frag").unwrap();
+
     let shader_program: Program = load_resource(&gl, "resources/shaders/basic")?;
+
     shader_program.set_used();
     let mut event_pump = sdl.event_pump().map_err(err_msg)?;
     'main: loop {
@@ -93,8 +75,12 @@ fn run() -> Result<(), failure::Error> {
 
         unsafe {
             gl.Clear(gl::COLOR_BUFFER_BIT);
-            gl.BindVertexArray(vao);
-            gl.DrawArrays(gl::TRIANGLES, 0, 3)
+        }
+
+        vao.bind();
+
+        unsafe {
+            gl.DrawArrays(gl::TRIANGLES, 0, 3);
         }
 
         window.gl_swap_window();
