@@ -6,11 +6,11 @@ use std::path::{Path,};
 
 pub trait ResError: std::fmt::Debug + failure::Fail {}
 
-impl<'a, E: ResError + 'a> From<E> for Box<dyn ResError + 'a> {
-    fn from(err: E) -> Box<dyn ResError + 'a> {
-        Box::new(err)
-    }
-}
+//impl<'a, E: ResError + 'a> From<E> for Box<dyn ResError + 'a> {
+//    fn from(err: E) -> Box<dyn ResError + 'a> {
+//        Box::new(err)
+//    }
+//}
 
 // Struct should implement this trait for them to be able to be created from data on the disk, the
 // The file_system mod should act as a library for the structs to easily implement asynchronous
