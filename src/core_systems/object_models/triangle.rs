@@ -2,7 +2,7 @@ use renderer_derive::{VertexAttribPointers};
 use crate::core_systems::renderer::{Program, buffer};
 use crate::core_systems::resource_manager::{load_resource, Resource};
 use crate::core_systems::renderer::data;
-use crate::core_systems::renderer::data::VertexData;
+use crate::core_systems::renderer::VertexAttribPointers;
 
 #[derive(Copy, Clone, Debug, VertexAttribPointers)]
 #[repr(C, packed)]

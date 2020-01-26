@@ -1,12 +1,22 @@
 use failure::err_msg;
+use renderer_derive::{VertexAttribPointers};
 
 mod core_systems;
 mod runtime_systems;
 
 use core_systems::object_models::{Triangle};
-use core_systems::renderer::{Viewport, ColorBuffer};
+use core_systems::renderer::{Viewport, ColorBuffer, data};
 use nalgebra as na;
 use crate::core_systems::object_models::IndexedMesh;
+
+#[derive(Copy, Clone, Debug, VertexAttribPointers)]
+#[repr(C, packed)]
+struct Vertex {
+    #[location = 0]
+    pos: data::f32_f32_f32,
+    #[location = 1]
+    clr: data::u2_u10_u10_u10_rev_float,
+}
 
 fn main() {
     if let Err(e) = run() {
@@ -30,7 +40,15 @@ fn run() -> Result<(), failure::Error> {
     let _gl_context = window.gl_create_context().map_err(err_msg)?;
     let gl = gl::Gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const std::os::raw::c_void);
 
-    let triangle = IndexedMesh::new(&gl)?;
+    let vertices: Vec<Vertex> = vec![
+        Vertex { pos: (-0.5, -0.5, 0.0).into(), clr: (1.0, 0.0, 0.0, 1.0).into() },
+        Vertex { pos: (0.5, -0.5, 0.0).into(), clr: (0.0, 1.0, 0.0, 1.0).into() },
+        Vertex { pos: (0.0, 0.5, 0.0).into(), clr: (0.0, 0.0, 1.0, 1.0).into() },
+    ];
+
+    let indices: Vec<u32> = vec![0, 1, 2];
+
+    let triangle = IndexedMesh::new(&gl, &vertices, &indices)?;
 
     let mut viewport = Viewport::for_window(900, 700);
     viewport.set_used(&gl);
