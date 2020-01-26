@@ -41,20 +41,20 @@ impl<B> Buffer<B> where B: BufferType {
 
     pub fn bind(&self) {
         unsafe {
-            self.gl.BindBuffer(gl::ARRAY_BUFFER, self.vbo);
+            self.gl.BindBuffer(B::BUFFER_TYPE, self.vbo);
         }
     }
 
     pub fn unbind(&self) {
         unsafe {
-            self.gl.BindBuffer(gl::ARRAY_BUFFER, 0);
+            self.gl.BindBuffer(B::BUFFER_TYPE, 0);
         }
     }
 
     pub fn static_draw_data<T>(&self, data: &[T]) {
         unsafe {
             self.gl.BufferData(
-                gl::ARRAY_BUFFER,
+                B::BUFFER_TYPE,
                 (data.len() * mem::size_of::<T>()) as gl::types::GLsizeiptr,
                 data.as_ptr() as *const gl::types::GLvoid,
                 gl::STATIC_DRAW,

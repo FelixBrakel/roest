@@ -3,7 +3,10 @@ use failure::err_msg;
 mod core_systems;
 mod runtime_systems;
 
-use crate::core_systems::object_models::{Triangle};
+use core_systems::object_models::{Triangle};
+use core_systems::renderer::{Viewport, ColorBuffer};
+use nalgebra as na;
+use crate::core_systems::object_models::IndexedMesh;
 
 fn main() {
     if let Err(e) = run() {
@@ -27,25 +30,31 @@ fn run() -> Result<(), failure::Error> {
     let _gl_context = window.gl_create_context().map_err(err_msg)?;
     let gl = gl::Gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const std::os::raw::c_void);
 
-    let triangle = Triangle::new(&gl)?;
+    let triangle = IndexedMesh::new(&gl)?;
 
-    unsafe {
-        gl.Viewport(0, 0, 900, 700);
-        gl.ClearColor(0.3, 0.3, 0.5, 1.0);
-    }
+    let mut viewport = Viewport::for_window(900, 700);
+    viewport.set_used(&gl);
+
+    let color_buffer = ColorBuffer::from_color(na::Vector3::new(0.3, 0.3, 0.5));
+    color_buffer.set_used(&gl);
 
     let mut event_pump = sdl.event_pump().map_err(err_msg)?;
     'main: loop {
         for event in event_pump.poll_iter() {
             match event {
                 sdl2::event::Event::Quit {..} => break 'main,
+                sdl2::event::Event::Window {
+                    win_event: sdl2::event::WindowEvent::Resized(w, h),
+                    ..
+                } => {
+                    viewport.update_size(w, h);
+                    viewport.set_used(&gl);
+                },
                 _ => {},
             }
         }
 
-        unsafe {
-            gl.Clear(gl::COLOR_BUFFER_BIT);
-        }
+        color_buffer.clear(&gl);
 
         triangle.render(&gl);
 
