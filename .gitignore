@@ -1,6 +1,4 @@
 /target/
 **/*.rs.bk
-.idea
-Cargo.lock
-Roest.iml
+*.lock
 *.obj

@@ -2,7 +2,6 @@ use failure::err_msg;
 use renderer_derive::{VertexAttribPointers};
 
 mod core_systems;
-mod runtime_systems;
 
 use core_systems::object_models::{Triangle};
 use core_systems::renderer::{Viewport, ColorBuffer, data};

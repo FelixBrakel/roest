@@ -1,0 +1,23 @@
+[package]
+name = "roest_runtime"
+version = "0.1.0"
+authors = ["Felix Brakel <felixbrakel@quicknet.nl>"]
+edition = "2018"
+publish = false
+
+#[workspace]
+
+[dependencies]
+failure = "0.1"
+sdl2 = "0.32.2"
+gl = { path = "lib/gl" }
+renderer_derive = { path = "lib/renderer_derive" }
+vec-2-10-10-10 = "0.1.2"
+half = "1.4.0"
+nalgebra = "0.19.0"
+
+[build-dependencies]
+walkdir = "2.2.9"
+
+[features]
+gl_debug = ["gl/debug"]

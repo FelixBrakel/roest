@@ -6,19 +6,19 @@ use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
 fn main() {
-    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
-    let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
-
-    // locate executable path even if the project is in workspace
-
-    let executable_path = locate_target_dir_from_output_dir(&out_dir)
-        .expect("failed to find target dir")
-        .join(env::var("PROFILE").unwrap());
-
-    copy(
-        &manifest_dir.join("resources"),
-        &executable_path.join("resources"),
-    );
+//    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
+//    let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
+//
+//     locate executable path even if the project is in workspace
+//
+//    let executable_path = locate_target_dir_from_output_dir(&out_dir)
+//        .expect("failed to find target dir")
+//        .join(env::var("PROFILE").unwrap());
+//
+//    copy(
+//        &manifest_dir.join("../../resources"),
+//        &executable_path.join("resources"),
+//    );
 }
 
 fn locate_target_dir_from_output_dir(mut target_dir_search: &Path) -> Option<&Path> {
