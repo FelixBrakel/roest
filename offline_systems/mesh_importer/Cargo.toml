@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 tobj = "0.1.11"
+clap = {version = "~2.33.0", features = ["yaml"]}

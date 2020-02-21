@@ -1,0 +1,13 @@
+name: Mesh Importer
+version: "0.1"
+author: Felix Brakel
+about: Converts meshes from an interchanable format to an internal one
+args:
+    - INPUT:
+        help: Sets the input file to use
+        required: true
+        index: 0
+    - OUTPUT:
+        help: Sets the output location
+        required: true
+        index: 1

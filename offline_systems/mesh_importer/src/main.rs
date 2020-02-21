@@ -1,8 +1,13 @@
 use std::path::Path;
 use tobj;
+use clap::{App, load_yaml};
 
 fn main() {
+    let yaml = load_yaml!("cli.yml");
+    let matches = App::from_yaml(yaml).get_matches();
 
+    let input = matches.value_of("INPUT").unwrap();
+    let output = matches.value_of("OUTPUT").unwrap();
 }
 
 fn load_obj_file(filepath: &str) -> Vec<tobj::Model> {
@@ -24,7 +29,6 @@ fn load_obj_file(filepath: &str) -> Vec<tobj::Model> {
                      mesh.indices[3 * f + 1], mesh.indices[3 * f + 2]);
         }
 
-         Normals and texture coordinates are also loaded, but not printed in this example
         println!("model[{}].vertices: {}", i, mesh.positions.len() / 3);
         assert!(mesh.positions.len() % 3 == 0);
         for v in 0..mesh.positions.len() / 3 {
