@@ -33,7 +33,7 @@ pub struct Program {
 }
 
 impl Program {
-    fn load_shaders(gl: &gl::Gl, shaders: &[Shader]) -> Result<Self, String>{
+    fn load_shaders(gl: &gl::Gl, shaders: &[Shader]) -> Result<Self, String> {
         let id = unsafe { gl.CreateProgram() };
         for shader in shaders {
             unsafe {

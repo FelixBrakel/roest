@@ -8,10 +8,12 @@ fn main() {
 
     let input = matches.value_of("INPUT").unwrap();
     let output = matches.value_of("OUTPUT").unwrap();
+    let obj_file = load_obj_file(input);
+    println!(env!("FS_ROOT"));
+    return ()
 }
 
 fn load_obj_file(filepath: &str) -> Vec<tobj::Model> {
-
     let cornell_box = tobj::load_obj(&Path::new(filepath));
     assert!(cornell_box.is_ok());
     let (models, materials) = cornell_box.unwrap();

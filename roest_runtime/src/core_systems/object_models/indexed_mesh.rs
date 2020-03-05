@@ -3,15 +3,6 @@ use crate::core_systems::resource_manager::{load_resource, Resource};
 use crate::core_systems::renderer::data;
 use crate::core_systems::renderer::data::VertexData;
 
-//#[derive(Copy, Clone, Debug, VertexAttribPointers)]
-//#[repr(C, packed)]
-//struct Vertex {
-//    #[location = 0]
-//    pos: data::f32_f32_f32,
-//    #[location = 1]
-//    clr: data::u2_u10_u10_u10_rev_float,
-//}
-
 pub struct IndexedMesh {
     program: Program,
     _index_vbo: buffer::ElementArrayBuffer,
@@ -65,6 +56,4 @@ impl IndexedMesh {
             );
         }
     }
-
-
 }

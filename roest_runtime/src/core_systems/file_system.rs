@@ -20,27 +20,22 @@ impl From<io::Error> for Error {
     }
 }
 
-//struct FileSystem {
-//    root_path: PathBuf
-//}
+struct Config {
+    root_path: PathBuf
+}
 
-//impl FileSystem {
-//    fn new() -> Self{
-//        FileSystem {root_path: Path::new("/Test").to_path_buf() }
-//    }
-//}
+struct FileSystem {
+   config: Config
+}
 
-//impl FileSystem {
-//    fn new() -> *Self {
-//
-//    }
-//}
+impl FileSystem {
+    fn new() -> Self {
+        let cfg = Config { root_path: PathBuf::from(env!("FS_ROOT")) };
+        FileSystem { config: cfg }
+    }
+}
 
-//pub fn initialize() -> *FileSystem {
-//    FileSystem::new()
-//}
-
-// Converts a path relative to the root to an absolute one
+// Converts a path relative to the project root to an absolute one
 pub fn file_name_to_path(name: impl AsRef<Path>) -> Result<PathBuf, Error> {
     let exe = std::env::current_exe().map_err(|_| Error::FailedToGetExePath)?;
     let path = exe.parent().ok_or(Error::FailedToGetExePath)?;
