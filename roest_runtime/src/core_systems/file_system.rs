@@ -24,16 +24,7 @@ struct Config {
     root_path: PathBuf
 }
 
-struct FileSystem {
-   config: Config
-}
 
-impl FileSystem {
-    fn new() -> Self {
-        let cfg = Config { root_path: PathBuf::from(env!("FS_ROOT")) };
-        FileSystem { config: cfg }
-    }
-}
 
 // Converts a path relative to the project root to an absolute one
 pub fn file_name_to_path(name: impl AsRef<Path>) -> Result<PathBuf, Error> {
