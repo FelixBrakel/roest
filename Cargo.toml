@@ -1,3 +1,3 @@
 [workspace]
-members = ["roest_runtime", "offline_systems/*"]
+members = ["roest_runtime", "offline_systems/*", "lib/*"]
 

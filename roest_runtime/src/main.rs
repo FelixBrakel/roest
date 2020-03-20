@@ -3,7 +3,6 @@ use renderer_derive::{VertexAttribPointers};
 
 mod core_systems;
 
-use core_systems::object_models::{Triangle};
 use core_systems::renderer::{Viewport, ColorBuffer, data};
 use nalgebra as na;
 use crate::core_systems::object_models::IndexedMesh;
@@ -47,7 +46,7 @@ fn run() -> Result<(), failure::Error> {
 
     let indices: Vec<u32> = vec![0, 1, 2];
 
-    let triangle = IndexedMesh::new(&gl, &vertices, &indices)?;
+    let triangle = IndexedMesh::new(&gl.clone(), &vertices, &indices)?;
 
     let mut viewport = Viewport::for_window(900, 700);
     viewport.set_used(&gl);

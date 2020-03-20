@@ -17,10 +17,15 @@ pub trait ResError: std::fmt::Debug + failure::Fail {}
 // file streaming, loading to CStrings, etc. The main function of this trait is to make sure the
 // correct loading procedure is done for a resource and that resources can return an error associated with the
 // implementation.
-pub trait Resource {
-    type E: ResError; // Error that the implementation of this struct will throw in case of some problem, this error
-    // should encase any underlying error with for example the file system.
+pub trait Loadable {
 
-    fn load(gl: &gl::Gl, path: impl AsRef<Path>) -> Result<Self, Self::E> where
-        Self: Sized,;
+    // Error that the implementation of this struct will throw in case of some problem, this error
+    // should encase any underlying error with for example the file system.
+    type E: ResError;
+    // Resource loaded from disc
+    type R: Resource;
+
+    fn load(&self, path: impl AsRef<Path>) -> Result<Self::R, Self::E>;
 }
+
+pub trait Resource {}

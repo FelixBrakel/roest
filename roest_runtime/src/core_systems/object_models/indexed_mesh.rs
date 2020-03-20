@@ -1,7 +1,7 @@
-use crate::core_systems::renderer::{Program, buffer, VertexAttribPointers};
-use crate::core_systems::resource_manager::{load_resource, Resource};
-use crate::core_systems::renderer::data;
-use crate::core_systems::renderer::data::VertexData;
+use crate::core_systems::renderer::{Program, ProgramLoader, buffer, VertexAttribPointers};
+use crate::core_systems::resource_manager::{Loadable};
+// use crate::core_systems::renderer::data;
+// use crate::core_systems::renderer::data::VertexData;
 
 pub struct IndexedMesh {
     program: Program,
@@ -12,21 +12,22 @@ pub struct IndexedMesh {
 }
 
 impl IndexedMesh {
-    pub fn new<V: VertexAttribPointers>(gl: &gl::Gl, vertices: &Vec<V>, indices: &Vec<u32>) -> Result<IndexedMesh, <Program as Resource>::E> {
-        let shader_program: Program = load_resource(&gl, "resources/shaders/basic")?;
+    pub fn new<V: VertexAttribPointers>(gl: &gl::Gl, vertices: &Vec<V>, indices: &Vec<u32>) -> Result<IndexedMesh, <ProgramLoader as Loadable>::E> {
+        let loader = ProgramLoader::new(gl.clone());
+        let shader_program: Program = loader.load("resources/shaders/basic")?;
 
-        let vertex_vbo = buffer::ArrayBuffer::new(&gl);
+        let vertex_vbo = buffer::ArrayBuffer::new(gl.clone());
 
         vertex_vbo.bind();
         vertex_vbo.static_draw_data(vertices);
         vertex_vbo.unbind();
 
-        let index_vbo = buffer::ElementArrayBuffer::new(&gl);
+        let index_vbo = buffer::ElementArrayBuffer::new(gl.clone());
         index_vbo.bind();
         index_vbo.static_draw_data(indices);
         index_vbo.unbind();
 
-        let mut vao = buffer::VertexArray::new(&gl);
+        let mut vao = buffer::VertexArray::new(gl.clone());
         vao.bind();
         vertex_vbo.bind();
         V::vertex_attrib_pointers(&gl);

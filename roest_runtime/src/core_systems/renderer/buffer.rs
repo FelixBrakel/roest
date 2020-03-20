@@ -25,7 +25,7 @@ pub trait BufferType {
 }
 
 impl<B> Buffer<B> where B: BufferType {
-    pub fn new(gl: &gl::Gl) -> Buffer<B> {
+    pub fn new(gl: gl::Gl) -> Buffer<B> {
         let mut vbo: gl::types::GLuint = 0;
 
         unsafe {
@@ -33,7 +33,7 @@ impl<B> Buffer<B> where B: BufferType {
         };
 
         Buffer {
-            gl: gl.clone(),
+            gl,
             vbo,
             _marker: ::std::marker::PhantomData,
         }
@@ -77,14 +77,14 @@ pub struct VertexArray {
 }
 
 impl VertexArray {
-    pub fn new(gl: &gl::Gl) -> VertexArray {
+    pub fn new(gl: gl::Gl) -> VertexArray {
         let mut vao: gl::types::GLuint = 0;
         unsafe {
             gl.GenVertexArrays(1, &mut vao);
         }
 
         VertexArray {
-            gl: gl.clone(),
+            gl,
             vao
         }
     }

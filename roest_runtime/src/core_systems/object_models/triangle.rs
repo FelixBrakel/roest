@@ -1,6 +1,6 @@
 use renderer_derive::{VertexAttribPointers};
-use crate::core_systems::renderer::{Program, buffer};
-use crate::core_systems::resource_manager::{load_resource, Resource};
+use crate::core_systems::renderer::{ProgramLoader, Program, buffer};
+use crate::core_systems::resource_manager::{Loadable};
 use crate::core_systems::renderer::data;
 use crate::core_systems::renderer::VertexAttribPointers;
 
@@ -20,8 +20,9 @@ pub struct Triangle {
 }
 
 impl Triangle {
-    pub fn new(gl: &gl::Gl) -> Result<Triangle, <Program as Resource>::E> {
-        let shader_program: Program = load_resource(&gl, "resources/shaders/basic")?;
+    pub fn new(gl: &gl::Gl) -> Result<Triangle, <ProgramLoader as Loadable>::E> {
+        let loader = ProgramLoader::new(gl.clone());
+        let shader_program: Program = loader.load("resources/shaders/basic")?;
 
         let vertices: Vec<Vertex> = vec![
             Vertex { pos: (-0.5, -0.5, 0.0).into(), clr: (1.0, 0.0, 0.0, 1.0).into() },
@@ -29,13 +30,13 @@ impl Triangle {
             Vertex { pos: (0.0, 0.5, 0.0).into(), clr: (0.0, 0.0, 1.0, 1.0).into() },
         ];
 
-        let vbo = buffer::ArrayBuffer::new(&gl);
+        let vbo = buffer::ArrayBuffer::new(gl.clone());
 
         vbo.bind();
         vbo.static_draw_data(&vertices);
         vbo.unbind();
 
-        let mut vao = buffer::VertexArray::new(&gl);
+        let mut vao = buffer::VertexArray::new(gl.clone());
         vao.bind();
         vbo.bind();
         Vertex::vertex_attrib_pointers(&gl);

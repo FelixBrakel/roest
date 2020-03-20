@@ -1,11 +1,9 @@
 use gl;
 use std;
 use std::fmt;
-use crate::core_systems::renderer::shader::{Shader, Error as ShaderError};
+use crate::core_systems::renderer::shader::{Shader, Error as ShaderError, ShaderLoader};
 use std::path::{Path, PathBuf};
-use crate::core_systems::resource_manager::{Resource, ResError};
-use crate::core_systems::resource_manager::load_resource;
-use crate::core_systems::file_system::synchronous::{create_initialized_cstring};
+use crate::core_systems::resource_manager::{Resource, ResError, create_initialized_cstring, Loadable};
 use failure::Fail;
 
 #[derive(Debug, Fail)]
@@ -32,8 +30,10 @@ pub struct Program {
     id: gl::types::GLuint,
 }
 
+impl Resource for Program {}
+
 impl Program {
-    fn load_shaders(gl: &gl::Gl, shaders: &[Shader]) -> Result<Self, String> {
+    fn load_shaders(gl: gl::Gl, shaders: &[Shader]) -> Result<Self, String> {
         let id = unsafe { gl.CreateProgram() };
         for shader in shaders {
             unsafe {
@@ -74,7 +74,7 @@ impl Program {
                 gl.DetachShader(id, shader.id());
             }
         }
-        Ok(Program { gl: gl.clone(), id: id })
+        Ok(Program { gl, id })
     }
 
     pub fn set_used(&self) {
@@ -84,10 +84,21 @@ impl Program {
     }
 }
 
-impl Resource for Program {
-    type E = Error;
+pub struct ProgramLoader {
+    gl: gl::Gl,
+}
 
-    fn load(gl: &gl::Gl, name: impl AsRef<Path>) -> Result<Program, Error> {
+impl ProgramLoader {
+    pub fn new(gl: gl::Gl) -> Self {
+        ProgramLoader { gl }
+    }
+}
+
+impl Loadable for ProgramLoader {
+    type E = Error;
+    type R = Program;
+
+    fn load(&self, name: impl AsRef<Path>) -> Result<Program, Error> {
         const POSSIBLE_EXT: [&str; 2] = [
             ".vert",
             ".frag",
@@ -95,13 +106,13 @@ impl Resource for Program {
 
         let shaders = POSSIBLE_EXT.iter()
             .map(|file_extension| {
-                load_resource(gl, format!("{}{}", name.as_ref().display(), file_extension))
-//                Shader::from_relative_root_path(gl, &format!("{}{}", name, file_extension))
+                let loadable = ShaderLoader::new(self.gl.clone());
+                loadable.load( format!("{}{}", name.as_ref().display(), file_extension))
             })
             .collect::<Result<Vec<Shader>, ShaderError>>().map_err(|e| Error::ShaderError {name: name.as_ref().to_path_buf(), inner: e})?;
 
-        Self::load_shaders(gl, &shaders[..])
-            .map_err(|message| Error::LinkError {name: name.as_ref().to_path_buf(), message })
+        Program::load_shaders(self.gl.clone(), &shaders[..])
+            .map_err(|message| Error::LinkError { name: name.as_ref().to_path_buf(), message })
     }
 }
 

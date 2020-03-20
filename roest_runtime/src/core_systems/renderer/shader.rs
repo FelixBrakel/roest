@@ -1,16 +1,15 @@
 use std;
 use std::path::{Path, PathBuf};
 use std::ffi::CStr;
-use crate::core_systems::resource_manager::{Resource, ResError};
-use crate::core_systems::file_system::synchronous::{read_to_cstring, create_initialized_cstring};
-use crate::core_systems::file_system::{Error as FsError};
+use crate::core_systems::resource_manager::{Resource, ResError, read_to_cstring, create_initialized_cstring, Loadable};
+use crate::core_systems::resource_manager;
 use failure::Fail;
 use std::fmt;
 
 #[derive(Debug, Fail)]
 pub enum Error {
 //    #[fail(display = "Failed to load resource {}", name)]
-    ResourceLoad { name: PathBuf, #[cause] inner: FsError },
+    ResourceLoad { name: PathBuf, #[cause] inner: resource_manager::Error },
 //    #[fail(display = "Can not determine shader type for resource {}", name)]
     CanNotDetermineShaderTypeForResource { name: PathBuf },
 //    #[fail(display = "Failed to compile shader {}: {}", name, message)]
@@ -37,8 +36,10 @@ pub struct Shader {
     id: gl::types::GLuint,
 }
 
+impl Resource for Shader {}
+
 impl Shader {
-    fn load_source(gl: &gl::Gl, source: &CStr, kind: gl::types::GLenum) -> Result<Shader, String> {
+    fn load_source(gl: gl::Gl, source: &CStr, kind: gl::types::GLenum) -> Result<Shader, String> {
         let id = unsafe {
             gl.CreateShader(kind)
         };
@@ -69,7 +70,7 @@ impl Shader {
         }
 
 
-        Ok(Shader { gl: gl.clone(), id: id })
+        Ok(Shader { gl, id })
     }
 
     pub fn id(&self) -> gl::types::GLuint {
@@ -77,10 +78,21 @@ impl Shader {
     }
 }
 
-impl Resource for Shader {
-    type E = Error;
+pub struct ShaderLoader {
+    gl: gl::Gl,
+}
 
-    fn load(gl: &gl::Gl, name: impl AsRef<Path>) -> Result<Shader, Error> {
+impl ShaderLoader {
+    pub fn new(gl: gl::Gl) -> Self {
+        ShaderLoader { gl }
+    }
+}
+
+impl Loadable for ShaderLoader {
+    type E = Error;
+    type R = Shader;
+
+    fn load(&self, name: impl AsRef<Path>) -> Result<Shader, Error> {
         let name_path = name.as_ref();
 
         let shader_kind = match name_path.extension() {
@@ -97,7 +109,7 @@ impl Resource for Shader {
         let shader_src = read_to_cstring(&name)
             .map_err(|e| Error::ResourceLoad { name: name_path.to_path_buf(), inner: e })?;
 
-        Self::load_source(gl, &shader_src, shader_kind)
+        Shader::load_source(self.gl.clone(), &shader_src, shader_kind)
             .map_err(|message| Error::CompileError { name: name_path.to_path_buf(), message })
     }
 }
