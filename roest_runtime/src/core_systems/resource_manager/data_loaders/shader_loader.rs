@@ -9,7 +9,7 @@ impl ResError for Error {}
 #[derive(Debug, Fail)]
 pub enum Error {
     #[fail(display = "Shader error {}", name)]
-    ShaderError { name: String, #[cause] inner:  ShaderError },
+    Shader { name: String, #[cause] inner:  ShaderError },
     #[fail(display = "Failed to load resource {}", name)]
     ResourceLoad { name: String, #[cause] inner: resource_manager::Error },
     #[fail(display = "Can not determine shader type for resource {}", name)]
@@ -47,6 +47,6 @@ impl Loader for ShaderLoader {
         let shader_src = read_to_cstring(&name)
             .map_err(|e| Error::ResourceLoad { name: name_path.to_string_lossy().into_owned(), inner: e })?;
         Shader::load_source(self.gl.clone(), &shader_src, shader_kind)
-            .map_err(|e| Error::ShaderError { name: name_path.to_string_lossy().into_owned(), inner: e })
+            .map_err(|e| Error::Shader { name: name_path.to_string_lossy().into_owned(), inner: e })
     }
 }

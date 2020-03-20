@@ -9,7 +9,7 @@ pub enum Error {
     #[fail(display = "ShaderLoader error")]
     ShaderLoader { name: String, #[cause] inner: ShLoaderError},
     #[fail(display = "Program error")]
-    ProgramError { name: String, #[cause] inner: ProgramError }
+    Program { name: String, #[cause] inner: ProgramError }
 }
 
 impl ResError for Error {}
@@ -45,6 +45,6 @@ impl Loader for ProgramLoader {
             .collect::<Result<Vec<Shader>, ShLoaderError>>().map_err(|e| Error::ShaderLoader { name: name_path.to_string_lossy().into_owned(), inner: e })?;
 
         Program::load_shaders(self.gl.clone(), &shaders[..])
-            .map_err(|e| Error::ProgramError { name: name_path.to_string_lossy().into_owned(), inner: e })
+            .map_err(|e| Error::Program { name: name_path.to_string_lossy().into_owned(), inner: e })
     }
 }
