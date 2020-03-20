@@ -9,14 +9,14 @@ publish = false
 
 [dependencies]
 gl = { path = "../lib/gl" }
+gl_renderer = { path = "../lib/gl_renderer" }
 renderer_derive = { path = "../lib/renderer_derive" }
 roefs = { path = "../lib/roefs" }
-failure = "0.1"
 sdl2 = "0.32.2"
-vec-2-10-10-10 = "0.1.2"
-half = "1.4.0"
-nalgebra = "0.19.0"
 lazy_static = "1.4.0"
+failure = "0.1.7"
+nalgebra = "0.20.0"
+
 
 [build-dependencies]
 walkdir = "2.2.9"

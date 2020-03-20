@@ -1,7 +1,7 @@
-pub mod data_loader;
+pub mod data_loaders;
 
 mod resource;
-pub use self::resource::{Resource, ResError, Loadable};
+pub use self::resource::{ResError, Loader};
 use roefs::synchronous::{File};
 use std::path::{Path, PathBuf};
 use std::ffi::{CString};
@@ -39,9 +39,6 @@ lazy_static!(
 
 // Converts a path relative to the project root to an absolute one
 fn file_name_to_path(name: impl AsRef<Path>) -> Result<PathBuf, Error> {
-    // let exe = std::env::current_exe().map_err(|_| Error::FailedToGetExePath)?;
-    // let path = exe.parent().ok_or(Error::FailedToGetExePath)?;
-
     Ok(CONFIG.root_path.join(name))
 }
 
@@ -58,13 +55,4 @@ pub fn read_to_cstring(res_name: impl AsRef<Path>) -> Result<CString, Error> {
     Ok(unsafe {
         CString::from_vec_unchecked(buff)
     })
-}
-
-pub fn create_initialized_cstring(len: usize) -> CString {
-    // allocate buffer of correct size
-    let mut buffer: Vec<u8> = Vec::with_capacity(len + 1);
-    // fill it with len spaces
-    buffer.extend([b' '].iter().cycle().take(len));
-    // convert buffer to CString
-    unsafe { CString::from_vec_unchecked(buffer) }
 }

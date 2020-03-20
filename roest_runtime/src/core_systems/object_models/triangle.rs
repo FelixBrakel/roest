@@ -1,8 +1,7 @@
+use gl_renderer::{Program, buffer, VertexAttribPointers, data};
 use renderer_derive::{VertexAttribPointers};
-use crate::core_systems::renderer::{ProgramLoader, Program, buffer};
-use crate::core_systems::resource_manager::{Loadable};
-use crate::core_systems::renderer::data;
-use crate::core_systems::renderer::VertexAttribPointers;
+use crate::core_systems::resource_manager::{Loader};
+use crate::core_systems::resource_manager::data_loaders::{ProgramLoader};
 
 #[derive(Copy, Clone, Debug, VertexAttribPointers)]
 #[repr(C, packed)]
@@ -20,7 +19,7 @@ pub struct Triangle {
 }
 
 impl Triangle {
-    pub fn new(gl: &gl::Gl) -> Result<Triangle, <ProgramLoader as Loadable>::E> {
+    pub fn new(gl: &gl::Gl) -> Result<Triangle, <ProgramLoader as Loader>::E> {
         let loader = ProgramLoader::new(gl.clone());
         let shader_program: Program = loader.load("resources/shaders/basic")?;
 

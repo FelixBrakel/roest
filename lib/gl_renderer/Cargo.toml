@@ -1,0 +1,17 @@
+[package]
+name = "gl_renderer"
+version = "0.1.0"
+authors = ["Felix Brakel <felixbrakel@quicknet.nl>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+gl = { path = "../gl" }
+nalgebra = "0.20.0"
+half = "1.5.0"
+failure = "0.1.7"
+vec-2-10-10-10 = "0.1.2"
+
+[features]
+gl_debug = ["gl/debug"]

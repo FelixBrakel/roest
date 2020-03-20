@@ -4,15 +4,12 @@ extern crate proc_macro;
 extern crate proc_macro2;
 
 use syn;
-//use quote;
 use quote::quote;
 use proc_macro::TokenStream;
-//use core::panicking::panic_fmt;
 
 #[proc_macro_derive(VertexAttribPointers, attributes(location))]
 pub fn vertex_attrib_pointers_derive(input: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(input as syn::DeriveInput);
-//    let ast = syn::parse_macro_input!(input as syn::DeriveInput);
 
     generate_impl(&ast)
 }
@@ -27,8 +24,8 @@ fn generate_impl(ast: &syn::DeriveInput) -> TokenStream {
     let fields_vertex_attrib_pointer = generate_vertex_attrib_pointer_calls(&ast.data);
 
     let gen = quote! {
-        use crate::core_systems::renderer::data::VertexData;
-        impl crate::core_systems::renderer::VertexAttribPointers for #ident #generics #where_clause {
+        use gl_renderer::data::VertexData;
+        impl gl_renderer::VertexAttribPointers for #ident #generics #where_clause {
             fn vertex_attrib_pointers(gl: &::gl::Gl) {
                 let stride = ::std::mem::size_of::<Self>();
                 let offset = 0;

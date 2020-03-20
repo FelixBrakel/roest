@@ -1,5 +1,6 @@
-use crate::core_systems::renderer::{Program, ProgramLoader, buffer, VertexAttribPointers};
-use crate::core_systems::resource_manager::{Loadable};
+use gl_renderer::{Program, buffer, VertexAttribPointers};
+use crate::core_systems::resource_manager::{Loader};
+use crate::core_systems::resource_manager::data_loaders::{ProgramLoader};
 // use crate::core_systems::renderer::data;
 // use crate::core_systems::renderer::data::VertexData;
 
@@ -12,7 +13,7 @@ pub struct IndexedMesh {
 }
 
 impl IndexedMesh {
-    pub fn new<V: VertexAttribPointers>(gl: &gl::Gl, vertices: &Vec<V>, indices: &Vec<u32>) -> Result<IndexedMesh, <ProgramLoader as Loadable>::E> {
+    pub fn new<V: VertexAttribPointers>(gl: &gl::Gl, vertices: &Vec<V>, indices: &Vec<u32>) -> Result<IndexedMesh, <ProgramLoader as Loader>::E> {
         let loader = ProgramLoader::new(gl.clone());
         let shader_program: Program = loader.load("resources/shaders/basic")?;
 

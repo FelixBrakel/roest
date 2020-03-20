@@ -1,10 +1,9 @@
 use failure::err_msg;
 use renderer_derive::{VertexAttribPointers};
-
+use nalgebra as na;
 mod core_systems;
 
-use core_systems::renderer::{Viewport, ColorBuffer, data};
-use nalgebra as na;
+use gl_renderer::{Viewport, ColorBuffer, data};
 use crate::core_systems::object_models::IndexedMesh;
 
 #[derive(Copy, Clone, Debug, VertexAttribPointers)]
