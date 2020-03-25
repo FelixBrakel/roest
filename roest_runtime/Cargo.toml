@@ -16,7 +16,8 @@ sdl2 = "0.32.2"
 lazy_static = "1.4.0"
 failure = "0.1.7"
 nalgebra = "0.20.0"
-
+serde = "1.0.105"
+bincode = "1.2.1"
 
 [build-dependencies]
 walkdir = "2.2.9"

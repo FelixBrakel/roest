@@ -1,6 +1,6 @@
 use gl_renderer::{Program, ProgramError, Shader};
 use std::path::{Path};
-use crate::core_systems::resource_manager::{Loader, ResError};
+use crate::core_systems::resource_manager::{Loader};
 use super::{ShaderLoader, ShLoaderError};
 use failure::Fail;
 
@@ -11,9 +11,6 @@ pub enum Error {
     #[fail(display = "Program error")]
     Program { name: String, #[cause] inner: ProgramError }
 }
-
-impl ResError for Error {}
-
 
 pub struct ProgramLoader {
     gl: gl::Gl,

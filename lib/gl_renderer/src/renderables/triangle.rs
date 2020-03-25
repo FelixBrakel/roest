@@ -1,15 +1,14 @@
-use gl_renderer::{Program, buffer, VertexAttribPointers, data};
-use crate::core_systems::resource_manager::{Loader};
-use crate::core_systems::resource_manager::data_loaders::{ProgramLoader};
+use crate::{Program, buffer, data};
+use renderer_derive::VertexAttribPointers;
 
-// #[derive(Copy, Clone, Debug, VertexAttribPointers)]
-// #[repr(C, packed)]
-// struct Vertex {
-//     #[location = 0]
-//     pos: data::f32_f32_f32,
-//     #[location = 1]
-//     clr: data::u2_u10_u10_u10_rev_float,
-// }
+#[derive(Copy, Clone, Debug, VertexAttribPointers)]
+#[repr(C, packed)]
+struct Vertex {
+    #[location = 0]
+    pos: data::f32_f32_f32,
+    #[location = 1]
+    clr: data::u2_u10_u10_u10_rev_float,
+}
 
 pub struct Triangle {
     program: Program,

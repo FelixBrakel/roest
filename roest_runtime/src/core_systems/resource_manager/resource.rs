@@ -4,8 +4,6 @@
  **/
 use std::path::{Path,};
 
-pub trait ResError: std::fmt::Debug + failure::Fail {}
-
 // Struct should implement this trait for them to be able to be created from data on the disk, the
 // The file_system mod should act as a library for the structs to easily implement asynchronous
 // file streaming, loading to CStrings, etc. The main function of this trait is to make sure the
@@ -14,7 +12,7 @@ pub trait ResError: std::fmt::Debug + failure::Fail {}
 pub trait Loader {
     // Error that the implementation of this struct will throw in case of some problem, this error
     // should encase any underlying error with for example the file system.
-    type E: ResError;
+    type E: std::fmt::Debug + failure::Fail;
     // Resource loaded from disc
     type R;
 

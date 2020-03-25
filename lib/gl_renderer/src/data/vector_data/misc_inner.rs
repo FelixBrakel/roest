@@ -1,5 +1,6 @@
 use gl::Gl;
-use super::VertexData;
+use crate::data::VertexData;
+use serde::{Serialize, Deserialize, Serializer, Deserializer};
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug)]
@@ -117,10 +118,24 @@ impl VertexData for i2_i10_i10_i10_rev_float {
     }
 }
 
+#[derive(Serialize, Deserialize)]
+#[serde(remote = "::vec_2_10_10_10::Vector")]
+struct VectorDef {
+    #[serde(getter = "::vec_2_10_10_10::Vector::raw_value")]
+    data: u32,
+}
+
+impl From<VectorDef> for ::vec_2_10_10_10::Vector {
+    fn from(other: VectorDef) -> ::vec_2_10_10_10::Vector {
+        ::vec_2_10_10_10::Vector::from_raw(other.data)
+    }
+}
+
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 #[repr(C, packed)]
 pub struct u2_u10_u10_u10_rev_float {
+    #[serde(with = "VectorDef")]
     pub inner: ::vec_2_10_10_10::Vector,
 }
 

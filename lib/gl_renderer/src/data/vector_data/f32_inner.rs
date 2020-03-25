@@ -1,5 +1,6 @@
 use gl::Gl;
-use super::VertexData;
+use crate::data::VertexData;
+use serde::{Serialize, Deserialize};
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug)]
@@ -69,7 +70,7 @@ impl From<(f32, f32)> for f32_f32 {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 #[repr(C, packed)]
 pub struct f32_f32_f32 {
     pub d0: f32,

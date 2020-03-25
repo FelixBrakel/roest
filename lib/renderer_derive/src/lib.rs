@@ -24,8 +24,7 @@ fn generate_impl(ast: &syn::DeriveInput) -> TokenStream {
     let fields_vertex_attrib_pointer = generate_vertex_attrib_pointer_calls(&ast.data);
 
     let gen = quote! {
-        use gl_renderer::data::VertexData;
-        impl gl_renderer::VertexAttribPointers for #ident #generics #where_clause {
+        impl VertexAttribPointers for #ident #generics #where_clause {
             fn vertex_attrib_pointers(gl: &::gl::Gl) {
                 let stride = ::std::mem::size_of::<Self>();
                 let offset = 0;

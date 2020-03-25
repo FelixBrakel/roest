@@ -1,6 +1,4 @@
-use gl_renderer::{Program, buffer, VertexAttribPointers};
-use crate::core_systems::resource_manager::{Loader};
-use crate::core_systems::resource_manager::data_loaders::{ProgramLoader};
+use crate::{Program, buffer, VertexAttribPointers, IndexedVertArray};
 
 pub struct IndexedMesh {
     program: Program,
@@ -11,19 +9,16 @@ pub struct IndexedMesh {
 }
 
 impl IndexedMesh {
-    pub fn new<V: VertexAttribPointers>(gl: gl::Gl, vertices: &Vec<V>, indices: &Vec<u32>) -> Result<IndexedMesh, <ProgramLoader as Loader>::E> {
-        let loader = ProgramLoader::new(gl.clone());
-        let shader_program: Program = loader.load("resources/shaders/basic")?;
-
+    pub fn new<V: VertexAttribPointers>(gl: gl::Gl, verts: &IndexedVertArray<V>, shader_program: Program) -> IndexedMesh {
         let vertex_vbo = buffer::ArrayBuffer::new(gl.clone());
 
         vertex_vbo.bind();
-        vertex_vbo.static_draw_data(vertices);
+        vertex_vbo.static_draw_data(&verts.vertices);
         vertex_vbo.unbind();
 
         let index_vbo = buffer::ElementArrayBuffer::new(gl.clone());
         index_vbo.bind();
-        index_vbo.static_draw_data(indices);
+        index_vbo.static_draw_data(&verts.indices);
         index_vbo.unbind();
 
         let mut vao = buffer::VertexArray::new(gl.clone());
@@ -33,13 +28,13 @@ impl IndexedMesh {
         vertex_vbo.unbind();
         vao.unbind();
 
-        Ok(IndexedMesh {
+        IndexedMesh {
             program: shader_program,
             _index_vbo: index_vbo,
             _vertex_vbo: vertex_vbo,
             vao,
-            n_indices: indices.len()
-        })
+            n_indices: verts.indices.len()
+        }
     }
 
     pub fn render(&self, gl: &gl::Gl) {

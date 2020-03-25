@@ -1,5 +1,5 @@
 use gl::Gl;
-use super::VertexData;
+use crate::data::VertexData;
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug)]

@@ -5,6 +5,7 @@
 
 use std::path::{Path,};
 use std::fs;
+use std::io;
 use std::io::{Read};
 use crate::Error;
 
@@ -25,6 +26,12 @@ impl File {
 
     pub fn metadata(&self) -> Result<Metadata, Error> {
         Ok(self.inner.metadata()?)
+    }
+}
+
+impl Read for File {
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize, io::Error> {
+        self.inner.read(buf)
     }
 }
 

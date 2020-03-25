@@ -1,10 +1,8 @@
 use gl_renderer::{Shader, ShaderError};
 use std::path::{Path};
-use crate::core_systems::resource_manager::{Loader, read_to_cstring, ResError};
+use crate::core_systems::resource_manager::{Loader, read_to_cstring};
 use crate::core_systems::resource_manager;
 use failure::Fail;
-
-impl ResError for Error {}
 
 #[derive(Debug, Fail)]
 pub enum Error {

@@ -1,7 +1,7 @@
 pub mod data_loaders;
 
 mod resource;
-pub use self::resource::{ResError, Loader};
+pub use self::resource::{Loader};
 use roefs::synchronous::{File};
 use std::path::{Path, PathBuf};
 use std::ffi::{CString};
@@ -42,7 +42,7 @@ fn file_name_to_path(name: impl AsRef<Path>) -> Result<PathBuf, Error> {
     Ok(CONFIG.root_path.join(name))
 }
 
-pub fn read_to_cstring(res_name: impl AsRef<Path>) -> Result<CString, Error> {
+fn read_to_cstring(res_name: impl AsRef<Path>) -> Result<CString, Error> {
     let full_path = file_name_to_path(res_name)?;
     let mut fp = File::open(full_path)?;
     let mut buff: Vec<u8> = Vec::with_capacity(fp.metadata()?.len() as usize + 1);
@@ -55,4 +55,9 @@ pub fn read_to_cstring(res_name: impl AsRef<Path>) -> Result<CString, Error> {
     Ok(unsafe {
         CString::from_vec_unchecked(buff)
     })
+}
+
+fn open_file(res_name: impl AsRef<Path>) -> Result<File, Error> {
+    let full_path = file_name_to_path(res_name)?;
+    File::open(full_path).map_err(|e| Error::Roefs(e))
 }

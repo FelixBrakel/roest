@@ -8,10 +8,12 @@ edition = "2018"
 
 [dependencies]
 gl = { path = "../gl" }
+renderer_derive = { path = "../renderer_derive" }
 nalgebra = "0.20.0"
 half = "1.5.0"
 failure = "0.1.7"
 vec-2-10-10-10 = "0.1.2"
+serde = { version = "1.0.105", features = ["derive"] }
 
 [features]
 gl_debug = ["gl/debug"]
