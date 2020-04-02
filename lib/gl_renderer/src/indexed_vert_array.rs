@@ -1,4 +1,4 @@
-use crate::{Program, buffer, VertexAttribPointers};
+use crate::{VertexAttribPointers};
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize)]

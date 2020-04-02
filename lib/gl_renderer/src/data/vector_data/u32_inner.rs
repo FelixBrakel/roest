@@ -1,8 +1,9 @@
+use serde::{Deserialize, Serialize};
 use gl::Gl;
-use crate::data::VertexData;
+use crate::Program;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 #[repr(C, packed)]
 pub struct u32_ {
     pub d0: u32,
@@ -14,8 +15,8 @@ impl u32_ {
     }
 }
 
-impl VertexData for u32_ {
-    unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
+impl u32_ {
+    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
         gl.EnableVertexAttribArray(location as gl::types::GLuint);
         gl.VertexAttribIPointer(
             location as gl::types::GLuint,
@@ -24,6 +25,24 @@ impl VertexData for u32_ {
             stride as gl::types::GLint,
             offset as *const gl::types::GLvoid,
         );
+    }
+
+    pub unsafe fn gl_uniform(&self, gl: &Gl, location: usize) {
+        gl.Uniform1ui(
+            location as gl::types::GLint,
+            self.d0 as gl::types::GLuint
+        );
+    }
+
+    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> Self {
+        let mut buf: u32 = 0;
+        gl.GetUniformuiv(
+            program.get_id(),
+            location as gl::types::GLint,
+            &mut buf as *mut gl::types::GLuint
+        );
+
+        return buf.into()
     }
 }
 
@@ -34,7 +53,7 @@ impl From<u32> for u32_ {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 #[repr(C, packed)]
 pub struct u32_u32 {
     pub d0: u32,
@@ -47,8 +66,8 @@ impl u32_u32 {
     }
 }
 
-impl VertexData for u32_u32 {
-    unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
+impl u32_u32 {
+    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
         gl.EnableVertexAttribArray(location as gl::types::GLuint);
         gl.VertexAttribIPointer(
             location as gl::types::GLuint,
@@ -57,6 +76,25 @@ impl VertexData for u32_u32 {
             stride as gl::types::GLint,
             offset as *const gl::types::GLvoid,
         );
+    }
+
+    pub unsafe fn gl_uniform(&self, gl: &Gl, location: usize) {
+        gl.Uniform2ui(
+            location as gl::types::GLint,
+            self.d0 as gl::types::GLuint,
+            self.d1 as gl::types::GLuint
+        );
+    }
+
+    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> Self {
+        let mut buf: Vec<u32> = Vec::with_capacity(2);
+        gl.GetUniformuiv(
+            program.get_id(),
+            location as gl::types::GLint,
+            buf.as_ptr() as *mut gl::types::GLuint
+        );
+
+        return (buf[0], buf[1]).into()
     }
 }
 
@@ -67,7 +105,7 @@ impl From<(u32, u32)> for u32_u32 {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 #[repr(C, packed)]
 pub struct u32_u32_u32 {
     pub d0: u32,
@@ -81,8 +119,8 @@ impl u32_u32_u32 {
     }
 }
 
-impl VertexData for u32_u32_u32 {
-    unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
+impl u32_u32_u32 {
+    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
         gl.EnableVertexAttribArray(location as gl::types::GLuint);
         gl.VertexAttribIPointer(
             location as gl::types::GLuint,
@@ -91,6 +129,26 @@ impl VertexData for u32_u32_u32 {
             stride as gl::types::GLint,
             offset as *const gl::types::GLvoid,
         );
+    }
+
+    pub unsafe fn gl_uniform(&self, gl: &Gl, location: usize) {
+        gl.Uniform3ui(
+            location as gl::types::GLint,
+            self.d0 as gl::types::GLuint,
+            self.d1 as gl::types::GLuint,
+            self.d2 as gl::types::GLuint
+        );
+    }
+
+    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> Self {
+        let mut buf: Vec<u32> = Vec::with_capacity(3);
+        gl.GetUniformuiv(
+            program.get_id(),
+            location as gl::types::GLint,
+            buf.as_ptr() as *mut gl::types::GLuint
+        );
+
+        return (buf[0], buf[1], buf[2]).into()
     }
 }
 
@@ -101,7 +159,7 @@ impl From<(u32, u32, u32)> for u32_u32_u32 {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 #[repr(C, packed)]
 pub struct u32_u32_u32_u32 {
     pub d0: u32,
@@ -116,8 +174,8 @@ impl u32_u32_u32_u32 {
     }
 }
 
-impl VertexData for u32_u32_u32_u32 {
-    unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
+impl u32_u32_u32_u32 {
+    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
         gl.EnableVertexAttribArray(location as gl::types::GLuint);
         gl.VertexAttribIPointer(
             location as gl::types::GLuint,
@@ -126,6 +184,26 @@ impl VertexData for u32_u32_u32_u32 {
             stride as gl::types::GLint,
             offset as *const gl::types::GLvoid,
         );
+    }
+    pub unsafe fn gl_uniform(&self, gl: &Gl, location: usize) {
+        gl.Uniform4ui(
+            location as gl::types::GLint,
+            self.d0 as gl::types::GLuint,
+            self.d1 as gl::types::GLuint,
+            self.d2 as gl::types::GLuint,
+            self.d3 as gl::types::GLuint,
+        );
+    }
+
+    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> Self {
+        let mut buf: Vec<u32> = Vec::with_capacity(4);
+        gl.GetUniformuiv(
+            program.get_id(),
+            location as gl::types::GLint,
+            buf.as_ptr() as *mut gl::types::GLuint
+        );
+
+        return (buf[0], buf[1], buf[2], buf[3]).into()
     }
 }
 

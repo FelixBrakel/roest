@@ -1,8 +1,8 @@
+use serde::{Deserialize, Serialize};
 use gl::Gl;
-use crate::data::VertexData;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 #[repr(C, packed)]
 pub struct u8_float {
     pub d0: u8,
@@ -14,8 +14,8 @@ impl u8_float {
     }
 }
 
-impl VertexData for u8_float {
-    unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
+impl u8_float {
+    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
         gl.EnableVertexAttribArray(location as gl::types::GLuint);
         gl.VertexAttribPointer(
             location as gl::types::GLuint,
@@ -35,7 +35,7 @@ impl From<u8> for u8_float {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 #[repr(C, packed)]
 pub struct u8_u8_float {
     pub d0: u8,
@@ -48,8 +48,8 @@ impl u8_u8_float {
     }
 }
 
-impl VertexData for u8_u8_float {
-    unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
+impl u8_u8_float {
+    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
         gl.EnableVertexAttribArray(location as gl::types::GLuint);
         gl.VertexAttribPointer(
             location as gl::types::GLuint,
@@ -69,7 +69,7 @@ impl From<(u8, u8)> for u8_u8_float {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 #[repr(C, packed)]
 pub struct u8_u8_u8_float {
     pub d0: u8,
@@ -83,8 +83,8 @@ impl u8_u8_u8_float {
     }
 }
 
-impl VertexData for u8_u8_u8_float {
-    unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
+impl u8_u8_u8_float {
+    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
         gl.EnableVertexAttribArray(location as gl::types::GLuint);
         gl.VertexAttribPointer(
             location as gl::types::GLuint,
@@ -104,7 +104,7 @@ impl From<(u8, u8, u8)> for u8_u8_u8_float {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 #[repr(C, packed)]
 pub struct u8_u8_u8_u8_float {
     pub d0: u8,
@@ -119,8 +119,8 @@ impl u8_u8_u8_u8_float {
     }
 }
 
-impl VertexData for u8_u8_u8_u8_float {
-    unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
+impl u8_u8_u8_u8_float {
+    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
         gl.EnableVertexAttribArray(location as gl::types::GLuint);
         gl.VertexAttribPointer(
             location as gl::types::GLuint,

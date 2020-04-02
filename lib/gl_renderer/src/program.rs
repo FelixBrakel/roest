@@ -14,7 +14,6 @@ pub struct Program {
     id: gl::types::GLuint,
 }
 
-
 impl Program {
     pub fn load_shaders(gl: gl::Gl, shaders: &[Shader]) -> Result<Self, Error> {
         let id = unsafe { gl.CreateProgram() };
@@ -64,6 +63,10 @@ impl Program {
         unsafe {
             self.gl.UseProgram(self.id);
         }
+    }
+
+    pub fn get_id(&self) -> gl::types::GLuint {
+        self.id
     }
 }
 

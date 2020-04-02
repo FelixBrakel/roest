@@ -1,6 +1,5 @@
 use crate::data::vector_data;
 use crate::VertexAttribPointers;
-use crate::data::VertexData;
 use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, Debug, VertexAttribPointers, Serialize, Deserialize)]

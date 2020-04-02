@@ -1,8 +1,8 @@
+use serde::{Deserialize, Serialize};
 use gl::Gl;
-use crate::data::VertexData;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 #[repr(C, packed)]
 pub struct u16_ {
     pub d0: u16,
@@ -14,8 +14,8 @@ impl u16_ {
     }
 }
 
-impl VertexData for u16_ {
-    unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
+impl u16_ {
+    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
         gl.EnableVertexAttribArray(location as gl::types::GLuint);
         gl.VertexAttribIPointer(
             location as gl::types::GLuint,
@@ -34,7 +34,7 @@ impl From<u16> for u16_ {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 #[repr(C, packed)]
 pub struct u16_u16 {
     pub d0: u16,
@@ -47,8 +47,8 @@ impl u16_u16 {
     }
 }
 
-impl VertexData for u16_u16 {
-    unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
+impl u16_u16 {
+    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
         gl.EnableVertexAttribArray(location as gl::types::GLuint);
         gl.VertexAttribIPointer(
             location as gl::types::GLuint,
@@ -67,7 +67,7 @@ impl From<(u16, u16)> for u16_u16 {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 #[repr(C, packed)]
 pub struct u16_u16_u16 {
     pub d0: u16,
@@ -81,8 +81,8 @@ impl u16_u16_u16 {
     }
 }
 
-impl VertexData for u16_u16_u16 {
-    unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
+impl u16_u16_u16 {
+    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
         gl.EnableVertexAttribArray(location as gl::types::GLuint);
         gl.VertexAttribIPointer(
             location as gl::types::GLuint,
@@ -101,7 +101,7 @@ impl From<(u16, u16, u16)> for u16_u16_u16 {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 #[repr(C, packed)]
 pub struct u16_u16_u16_u16 {
     pub d0: u16,
@@ -116,8 +116,8 @@ impl u16_u16_u16_u16 {
     }
 }
 
-impl VertexData for u16_u16_u16_u16 {
-    unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
+impl u16_u16_u16_u16 {
+    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
         gl.EnableVertexAttribArray(location as gl::types::GLuint);
         gl.VertexAttribIPointer(
             location as gl::types::GLuint,

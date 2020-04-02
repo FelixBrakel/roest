@@ -1,9 +1,10 @@
 use std::path::Path;
 use clap::{App, load_yaml};
-use gl_renderer::IndexedVertArray;
+use gl_renderer::{IndexedVertArray, VertexAttribPointers};
 use gl_renderer::data::vertex_data::ColoredVertex;
 use std::fs;
 use std::io::Write;
+use std::f32;
 
 fn main() {
     let yaml = load_yaml!("cli.yml");
@@ -14,25 +15,59 @@ fn main() {
     let obj_file = load_obj_file(input);
 
     let m = &obj_file[0].mesh;
+
+    let mut tuples: Vec<(f32, f32, f32)> = Vec::with_capacity(m.indices.len() / 3);
     let mut verts: Vec<ColoredVertex> = Vec::with_capacity(m.indices.len() / 3);
-    println!();
+
+    let mut max: f32 = 0.;
+    let mut min: f32 = 0.;
+
+    let mut avg_x = 0.;
+    let mut avg_y = 0.;
+    let mut avg_z = 0.;
 
     for v in 0..m.positions.len() / 3 {
         let x = m.positions[3 * v];
         let y = m.positions[3 * v + 1];
         let z = m.positions[3 * v + 2];
 
-        verts.push(ColoredVertex { pos: (x, y, z).into(), clr: (0.5, 0.5, 0.5, 0.5).into() });
+        avg_x += m.positions[3 * v];
+        avg_y += m.positions[3 * v + 1];
+        avg_z += m.positions[3 * v + 2];
+
+        tuples.push((x, y, z));
+    }
+
+    avg_x /= (m.positions.len() / 3) as f32;
+    avg_y /= (m.positions.len() / 3) as f32;
+    avg_z /= (m.positions.len() / 3) as f32;
+
+    for (x, y, z) in tuples.iter_mut() {
+        *x -= avg_x;
+        *y -= avg_y;
+        *z -= avg_z;
+
+        max = max.max(*x).max(*y).max(*z);
+        min = min.min(*x).min(*y).min(*z);
+    }
+
+    for (x, y, z) in tuples {
+        let x_normalized = (x - min) / (max - min) * 2. - 1.;
+        let y_normalized = (y - min) / (max - min) * 2. - 1.;
+        let z_normalized = (z - min) / (max - min) * 2. - 1.;
+
+        verts.push(ColoredVertex {
+            pos: (x_normalized, y_normalized, z_normalized).into(),
+            clr: (0.5, 0.5, 0.5, 0.5).into()
+        });
     }
 
     let indexed_vert_array = IndexedVertArray::new(verts, m.indices.clone());
     let serialized = bincode::serialize(&indexed_vert_array).unwrap();
 
-    let mut new_file = fs::File::create(output);
-    let mut new_file = new_file.unwrap();
+    let mut new_file = fs::File::create(output).unwrap();
 
-    new_file.write_all(&serialized);
-
+    new_file.write_all(&serialized).unwrap();
     return ()
 }
 

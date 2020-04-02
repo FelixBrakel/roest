@@ -1,6 +1,11 @@
 pub mod vector_data;
+pub mod vector_data_zst;
 pub mod vertex_data;
+pub mod material_data;
+pub mod mesh_data;
+pub mod matrix_data;
+pub mod matrix_data_zst;
 
-pub trait VertexData {
-    unsafe fn vertex_attrib_pointer(gl: &gl::Gl, stride: usize, location: usize, offset: usize);
+pub trait ZSTVariant {
+    type Original;
 }

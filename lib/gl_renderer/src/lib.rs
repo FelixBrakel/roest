@@ -7,15 +7,13 @@ mod shader;
 mod program;
 mod indexed_vert_array;
 mod color_buffer;
-mod vertex_attrib_pointers;
 
 pub use viewport::Viewport;
 pub use shader::{Shader, Error as ShaderError};
 pub use program::{Program, Error as ProgramError};
 pub use indexed_vert_array::{IndexedVertArray};
 pub use color_buffer::ColorBuffer;
-pub use vertex_attrib_pointers::VertexAttribPointers;
-pub use renderer_derive::VertexAttribPointers;
+pub use renderer_derive::{VertexAttribPointers, gl_getters, gl_setters};
 
 use std::ffi::{CString};
 
@@ -26,4 +24,8 @@ fn create_initialized_cstring(len: usize) -> CString {
     buffer.extend([b' '].iter().cycle().take(len));
     // convert buffer to CString
     unsafe { CString::from_vec_unchecked(buffer) }
+}
+
+pub trait VertexAttribPointers {
+    fn vertex_attrib_pointers(gl: &gl::Gl);
 }

@@ -1,5 +1,9 @@
 mod indexed_mesh;
-// mod triangle;
+mod mesh_renderer;
 
-// pub use triangle::Triangle;
+pub use mesh_renderer::IMeshRenderer;
 pub use indexed_mesh::IndexedMesh;
+
+pub trait Renderer {
+    fn render(&self);
+}

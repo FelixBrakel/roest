@@ -3,18 +3,10 @@ use failure::err_msg;
 use nalgebra as na;
 mod core_systems;
 
-use gl_renderer::{Viewport, ColorBuffer, data, renderables::IndexedMesh};
-use core_systems::resource_manager::data_loaders::IndexedMeshLoader;
+use gl_renderer::{Viewport, ColorBuffer, data, data::mesh_data::IndexedMesh, data::matrix_data::mat4};
+use core_systems::resource_manager::data_loaders::{IndexedMeshLoader, FlatMatLoader};
 use crate::core_systems::resource_manager::Loader;
-
-// #[derive(Copy, Clone, Debug, VertexAttribPointers)]
-// #[repr(C, packed)]
-// struct Vertex {
-//     #[location = 0]
-//     pos: data::f32_f32_f32,
-//     #[location = 1]
-//     clr: data::u2_u10_u10_u10_rev_float,
-// }
+use gl_renderer::renderables::{IMeshRenderer, Renderer};
 
 fn main() {
     if let Err(e) = run() {
@@ -38,17 +30,20 @@ fn run() -> Result<(), failure::Error> {
     let _gl_context = window.gl_create_context().map_err(err_msg)?;
     let gl = gl::Gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const std::os::raw::c_void);
 
-    // let vertices: Vec<Vertex> = vec![
-    //     Vertex { pos: (-0.5, -0.5, 0.0).into(), clr: (1.0, 0.0, 0.0, 1.0).into() },
-    //     Vertex { pos: (0.5, -0.5, 0.0).into(), clr: (0.0, 1.0, 0.0, 1.0).into() },
-    //     Vertex { pos: (0.0, 0.5, 0.0).into(), clr: (0.0, 0.0, 1.0, 1.0).into() },
-    // ];
+    let teapot_loader: IndexedMeshLoader<data::vertex_data::ColoredVertex> = IndexedMeshLoader::new(gl.clone());
+    let teapot = teapot_loader.load("REPLACE").unwrap();
 
-    // let indices: Vec<u32> = vec![0, 1, 2];
+    let flatmat_loader = FlatMatLoader::new(gl.clone());
+    let flatmat = flatmat_loader.load("REPLACE ME").unwrap();
 
-    // let triangle = IndexedMesh::new(gl.clone(), &vertices, &indices)?;
-    let loader: IndexedMeshLoader<data::vertex_data::ColoredVertex> = IndexedMeshLoader::new(gl.clone());
-    let triangle = loader.load("REPLACE").unwrap();
+    let teapot_render = IMeshRenderer::new(gl.clone(), teapot, flatmat);
+    let mat = na::Matrix::from_data()
+    let mvp = mat4::new(
+        0.5, 0., 0., 0.,
+        0., 0.5, 0., 0.,
+        0., 0., 0.5, 0.,
+        0., 0., 0., 1.);
+    teapot_render.material.gl_set_MVP(mvp);
 
     let mut viewport = Viewport::for_window(900, 700);
     viewport.set_used(&gl);
@@ -74,7 +69,7 @@ fn run() -> Result<(), failure::Error> {
 
         color_buffer.clear(&gl);
 
-        triangle.render(&gl);
+        teapot_render.render();
 
         window.gl_swap_window();
     }

@@ -1,8 +1,8 @@
+use serde::{Deserialize, Serialize};
 use gl::Gl;
-use crate::data::VertexData;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 #[repr(C, packed)]
 pub struct i32_float {
     pub d0: i32,
@@ -14,8 +14,8 @@ impl i32_float {
     }
 }
 
-impl VertexData for i32_float {
-    unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
+impl i32_float {
+    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
         gl.EnableVertexAttribArray(location as gl::types::GLuint);
         gl.VertexAttribPointer(
             location as gl::types::GLuint,
@@ -36,7 +36,8 @@ impl From<i32> for i32_float {
 
 // -----------------------------------------
 
-#[derive(Copy, Clone, Debug)]
+#[allow(non_camel_case_types)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 #[repr(C, packed)]
 pub struct i32_i32_float {
     pub d0: i32,
@@ -49,8 +50,8 @@ impl i32_i32_float {
     }
 }
 
-impl VertexData for i32_i32_float {
-    unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
+impl i32_i32_float {
+    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
         gl.EnableVertexAttribArray(location as gl::types::GLuint);
         gl.VertexAttribPointer(
             location as gl::types::GLuint,
@@ -71,7 +72,8 @@ impl From<(i32, i32)> for i32_i32_float {
 
 // -----------------------------------------
 
-#[derive(Copy, Clone, Debug)]
+#[allow(non_camel_case_types)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 #[repr(C, packed)]
 pub struct i32_i32_i32_float {
     pub d0: i32,
@@ -85,8 +87,8 @@ impl i32_i32_i32_float {
     }
 }
 
-impl VertexData for i32_i32_i32_float {
-    unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
+impl i32_i32_i32_float {
+    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
         gl.EnableVertexAttribArray(location as gl::types::GLuint);
         gl.VertexAttribPointer(
             location as gl::types::GLuint,
@@ -107,7 +109,8 @@ impl From<(i32, i32, i32)> for i32_i32_i32_float {
 
 // -----------------------------------------
 
-#[derive(Copy, Clone, Debug)]
+#[allow(non_camel_case_types)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 #[repr(C, packed)]
 pub struct i32_i32_i32_i32_float {
     pub d0: i32,
@@ -122,8 +125,8 @@ impl i32_i32_i32_i32_float {
     }
 }
 
-impl VertexData for i32_i32_i32_i32_float {
-    unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
+impl i32_i32_i32_i32_float {
+    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
         gl.EnableVertexAttribArray(location as gl::types::GLuint);
         gl.VertexAttribPointer(
             location as gl::types::GLuint,

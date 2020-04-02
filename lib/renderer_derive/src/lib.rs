@@ -3,28 +3,59 @@
 extern crate proc_macro;
 extern crate proc_macro2;
 
+mod gl_setters;
+mod gl_getters;
+
 use syn;
 use quote::quote;
-use proc_macro::TokenStream;
+use proc_macro::{TokenStream};
+
+use gl_setters::genereate_gl_set_impl;
+use gl_getters::genereate_gl_get_impl;
+
+#[proc_macro_derive(gl_setters, attributes(location))]
+pub fn gl_set_derive(input: TokenStream) -> TokenStream {
+    let ast = syn::parse_macro_input!(input as syn::DeriveInput);
+
+    genereate_gl_set_impl(&ast)
+}
+
+#[proc_macro_derive(gl_getters, attributes(location))]
+pub fn gl_get_derive(input: TokenStream) -> TokenStream {
+    let ast = syn::parse_macro_input!(input as syn::DeriveInput);
+
+    genereate_gl_get_impl(&ast)
+}
 
 #[proc_macro_derive(VertexAttribPointers, attributes(location))]
 pub fn vertex_attrib_pointers_derive(input: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(input as syn::DeriveInput);
 
-    generate_impl(&ast)
+    generate_v_attr_ptr_impl(&ast)
 }
 
-fn generate_impl(ast: &syn::DeriveInput) -> TokenStream {
+fn generate_v_attr_ptr_impl(ast: &syn::DeriveInput) -> TokenStream {
     let ident = &ast.ident;
     let generics = &ast.generics;
     let where_clause = &ast.generics.where_clause;
-
-//    panic!("{:#?}", ast);
+    let name = std::env::var("CARGO_PKG_NAME").unwrap();
+    let import = if name != "gl_renderer" {
+        quote! {
+            use gl_renderer as _gl_renderer;
+        }
+    } else {
+        quote! {
+            use crate as _gl_renderer;
+        }
+    };
 
     let fields_vertex_attrib_pointer = generate_vertex_attrib_pointer_calls(&ast.data);
 
     let gen = quote! {
-        impl VertexAttribPointers for #ident #generics #where_clause {
+        #import
+        #[automatically_derived]
+        #[allow(unused_qualifications)]
+        impl _gl_renderer::VertexAttribPointers for #ident #generics #where_clause {
             fn vertex_attrib_pointers(gl: &::gl::Gl) {
                 let stride = ::std::mem::size_of::<Self>();
                 let offset = 0;
@@ -53,7 +84,6 @@ fn generate_vertex_attrib_pointer_calls(data: &syn::Data) -> Vec<proc_macro2::To
 }
 
 fn generate_vertex_attrib_pointer_call(field: &syn::Field) -> proc_macro2::TokenStream {
-//    panic!("{:#?}", field);
     let field_name = match &field.ident {
         Some(i) => format!("{}", i),
         None => String::from(""),
@@ -64,7 +94,6 @@ fn generate_vertex_attrib_pointer_call(field: &syn::Field) -> proc_macro2::Token
         .filter(|a| a.path.is_ident("location"))
         .next()
         .unwrap_or_else(|| panic!("Field {:?} is missing #[location = ?] attribute", field_name));
-//    panic!("ATTR: {:#?}", location_attr);
 
     let val_literal = match location_attr.parse_meta().unwrap() {
         syn::Meta::NameValue(val) => val.lit,
@@ -72,7 +101,6 @@ fn generate_vertex_attrib_pointer_call(field: &syn::Field) -> proc_macro2::Token
     };
 
     let field_ty = &field.ty;
-
     let gen = quote! {
         let location = #val_literal;
         unsafe {
