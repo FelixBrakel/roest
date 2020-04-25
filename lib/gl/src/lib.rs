@@ -3,27 +3,36 @@ mod bindings {
 }
 
 pub use bindings::*;
-pub use bindings::Gl as InnerGl;
-use std::rc::Rc;
-use std::ops::Deref;
+// pub use bindings::Gl as InnerGl;
+// use std::rc::Rc;
+// use std::ops::Deref;
 
-#[derive(Clone)]
-pub struct Gl {
-    inner: Rc<bindings::Gl>
-}
+// #[derive(Clone)]
+// pub type Gl = Rc<bindings::Gl>;
 
-impl Gl {
-    pub fn load_with<F>(loadfn: F) -> Gl
-        where F: FnMut(&'static str) -> *const types::GLvoid
-    {
-        Gl { inner: Rc::new(bindings::Gl::load_with(loadfn)) }
-    }
-}
+// impl Gl {
+//     fn load_with<F>(loadfn: F) -> Gl {
+//         Rc::new(bindings::Gl::load_with(loadfn))
+//     }
+// }
 
-impl Deref for Gl {
-    type Target = bindings::Gl;
+// #[derive(Clone)]
+// pub struct Gl {
+//     inner: Rc<bindings::Gl>
+// }
 
-    fn deref(&self) -> &bindings::Gl {
-        &self.inner
-    }
-}
+// impl Gl {
+//     pub fn load_with<F>(loadfn: F) -> Gl
+//         where F: FnMut(&'static str) -> *const types::GLvoid
+//     {
+//         Gl { inner: Rc::new(bindings::Gl::load_with(loadfn)) }
+//     }
+// }
+
+// impl Deref for Gl {
+//     type Target = bindings::Gl;
+//
+//     fn deref(&self) -> &bindings::Gl {
+//         &self.inner
+//     }
+// }

@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use gl::Gl;
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
@@ -15,9 +14,9 @@ impl i2_i10_i10_i10_rev {
 }
 
 impl i2_i10_i10_i10_rev {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribPointer(
             location as gl::types::GLuint,
             4,                      // the number of components per generic vertex attribute
             gl::INT_2_10_10_10_REV, // data type
@@ -56,9 +55,9 @@ impl u2_u10_u10_u10_rev {
 }
 
 impl u2_u10_u10_u10_rev {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribPointer(
             location as gl::types::GLuint,
             4, // the number of components per generic vertex attribute
             gl::UNSIGNED_INT_2_10_10_10_REV, // data type
@@ -91,9 +90,9 @@ impl u10_u11_u11_rev {
 }
 
 impl u10_u11_u11_rev {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribPointer(
             location as gl::types::GLuint,
             3, // the number of components per generic vertex attribute
             gl::UNSIGNED_INT_10F_11F_11F_REV, // data type
@@ -118,9 +117,9 @@ impl i2_i10_i10_i10_rev_float {
 }
 
 impl i2_i10_i10_i10_rev_float {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribPointer(
             location as gl::types::GLuint,
             4,                      // the number of components per generic vertex attribute
             gl::INT_2_10_10_10_REV, // data type
@@ -146,9 +145,9 @@ impl u2_u10_u10_u10_rev_float {
 }
 
 impl u2_u10_u10_u10_rev_float {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribPointer(
             location as gl::types::GLuint,
             4, // the number of components per generic vertex attribute
             gl::UNSIGNED_INT_2_10_10_10_REV, // data type
@@ -180,9 +179,9 @@ impl u10_u11_u11_rev_float {
     }
 }
 impl u10_u11_u11_rev_float {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribPointer(
             location as gl::types::GLuint,
             3, // the number of components per generic vertex attribute
             gl::UNSIGNED_INT_10F_11F_11F_REV, // data type

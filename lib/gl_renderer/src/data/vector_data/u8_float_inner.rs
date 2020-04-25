@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use gl::Gl;
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
@@ -15,9 +14,9 @@ impl u8_float {
 }
 
 impl u8_float {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribPointer(
             location as gl::types::GLuint,
             1,                 // the number of components per generic vertex attribute
             gl::UNSIGNED_BYTE, // data type
@@ -49,9 +48,9 @@ impl u8_u8_float {
 }
 
 impl u8_u8_float {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribPointer(
             location as gl::types::GLuint,
             2,                 // the number of components per generic vertex attribute
             gl::UNSIGNED_BYTE, // data type
@@ -84,9 +83,9 @@ impl u8_u8_u8_float {
 }
 
 impl u8_u8_u8_float {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribPointer(
             location as gl::types::GLuint,
             3,                 // the number of components per generic vertex attribute
             gl::UNSIGNED_BYTE, // data type
@@ -120,9 +119,9 @@ impl u8_u8_u8_u8_float {
 }
 
 impl u8_u8_u8_u8_float {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribPointer(
             location as gl::types::GLuint,
             4,                 // the number of components per generic vertex attribute
             gl::UNSIGNED_BYTE, // data type

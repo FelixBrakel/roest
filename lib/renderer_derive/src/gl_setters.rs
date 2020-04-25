@@ -84,6 +84,7 @@ fn generate_gl_set(field: &syn::Field) -> Option<proc_macro2::TokenStream> {
 
     let gen = quote! {
         pub fn #func_ident(&self, data: <#field_ty as _gl_renderer::data::ZSTVariant>::Original) {
+            use __gl_renderer::data::matrix_data::GlMat;
             &self.program.set_used();
             unsafe {
                 data.gl_uniform(&self.gl, #val_literal);

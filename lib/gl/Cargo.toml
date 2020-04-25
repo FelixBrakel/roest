@@ -5,7 +5,4 @@ authors = ["Felix Brakel <felixbrakel@quicknet.nl>"]
 edition = "2018"
 
 [build-dependencies]
-gl_generator = { version = "0.10.0" }
-
-[features]
-debug = []
+gl_generator = "0.14.0"

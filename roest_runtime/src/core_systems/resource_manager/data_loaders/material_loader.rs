@@ -1,6 +1,5 @@
 use crate::core_systems::resource_manager::data_loaders::{PrLoaderError, ProgramLoader};
 use crate::core_systems::resource_manager::Loader;
-use gl_renderer::data::material_data::flat;
 use std::path::Path;
 use failure::Fail;
 

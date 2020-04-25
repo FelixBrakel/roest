@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use gl::Gl;
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
@@ -15,9 +14,9 @@ impl i16_ {
 }
 
 impl i16_ {
-    pub unsafe fn vertex_attrib_pointer( gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribIPointer(
+    pub unsafe fn vertex_attrib_pointer( stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribIPointer(
             location as gl::types::GLuint,
             1,         // the number of components per generic vertex attribute
             gl::SHORT, // data type
@@ -49,9 +48,9 @@ impl i16_i16 {
 }
 
 impl i16_i16  {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribIPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribIPointer(
             location as gl::types::GLuint,
             2,         // the number of components per generic vertex attribute
             gl::SHORT, // data type
@@ -83,9 +82,9 @@ impl i16_i16_i16 {
 }
 
 impl i16_i16_i16  {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribIPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribIPointer(
             location as gl::types::GLuint,
             3,         // the number of components per generic vertex attribute
             gl::SHORT, // data type
@@ -118,9 +117,9 @@ impl i16_i16_i16_i16 {
 }
 
 impl i16_i16_i16_i16 {
-     pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribIPointer(
+     pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribIPointer(
             location as gl::types::GLuint,
             4,         // the number of components per generic vertex attribute
             gl::SHORT, // data type

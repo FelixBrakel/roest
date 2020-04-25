@@ -1,12 +1,14 @@
 use failure::err_msg;
-// use renderer_derive::{VertexAttribPointers};
 use nalgebra as na;
 mod core_systems;
+mod core_components;
+use legion::prelude::*;
 
-use gl_renderer::{Viewport, ColorBuffer, data, data::mesh_data::IndexedMesh, data::matrix_data::mat4};
-use core_systems::resource_manager::data_loaders::{IndexedMeshLoader, FlatMatLoader};
+use gl_renderer::{Viewport, ColorBuffer, vertex};
+use core_systems::resource_manager::data_loaders::{IndexedMeshLoader};
 use crate::core_systems::resource_manager::Loader;
-use gl_renderer::renderables::{IMeshRenderer, Renderer};
+use gl_renderer::data::matrix_data::{mat3};
+use crate::core_systems::resource_manager::data_loaders::ProgramLoader;
 
 fn main() {
     if let Err(e) = run() {
@@ -28,28 +30,73 @@ fn run() -> Result<(), failure::Error> {
         .unwrap();
 
     let _gl_context = window.gl_create_context().map_err(err_msg)?;
-    let gl = gl::Gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const std::os::raw::c_void);
+    gl::load_with(
+        |s| video_subsystem.gl_get_proc_address(s) as *const std::os::raw::c_void
+    );
 
-    let teapot_loader: IndexedMeshLoader<data::vertex_data::ColoredVertex> = IndexedMeshLoader::new(gl.clone());
-    let teapot = teapot_loader.load("REPLACE").unwrap();
-
-    let flatmat_loader = FlatMatLoader::new(gl.clone());
-    let flatmat = flatmat_loader.load("REPLACE ME").unwrap();
-
-    let teapot_render = IMeshRenderer::new(gl.clone(), teapot, flatmat);
-    let mat = na::Matrix::from_data()
-    let mvp = mat4::new(
-        0.5, 0., 0., 0.,
-        0., 0.5, 0., 0.,
-        0., 0., 0.5, 0.,
-        0., 0., 0., 1.);
-    teapot_render.material.gl_set_MVP(mvp);
+    unsafe {
+        gl::Enable(gl::DEPTH_TEST);
+    }
 
     let mut viewport = Viewport::for_window(900, 700);
-    viewport.set_used(&gl);
+    viewport.set_used();
+    let universe = Universe::new();
+    let mut world = universe.create_world();
+
+    // world.register::<core_components::Transform>();
+    // world.register::<core_components::Camera>();
+    // world.register::<core_components::renderable::IMeshRenderer>();
+    // world.register::<core_components::IndexedMesh>();
+    // world.register::<core_components::material::Flat>();
+
+    let transform = core_components::Transform::new(
+        1.,
+        na::Vector3::new(0., 0., -2.),
+        na::UnitQuaternion::from_euler_angles(0., 0., 0.),
+        na::Rotation3::from_euler_angles(0., 0., 0.)
+    );
+
+    let cam_rot = mat3::new(
+        1., 0., 0.,
+        0., 1., 0.,
+        0., 0., 1.
+    );
+    let camera = core_components::Camera::from_fov(
+        (0., 0., 0.).into(),
+        cam_rot,
+        60.,
+        viewport.w as f32 / viewport.h as f32,
+        0.1,
+        100.
+    );
+
+    let program = ProgramLoader::new().load("resources/shaders/basic").unwrap();
+
+    let teapot_loader: IndexedMeshLoader<vertex::NormalVertex> = IndexedMeshLoader::new();
+
+    let material = core_components::material::Flat::new((0.1, 0.1, 0.1, 1.0).into());
 
     let color_buffer = ColorBuffer::from_color(na::Vector3::new(0.3, 0.3, 0.5));
-    color_buffer.set_used(&gl);
+    color_buffer.set_used();
+
+    let renderer = core_systems::RendererSystem::system();
+    world.resources.insert(program);
+
+    world.insert(
+        (),
+        (0..1).map(
+            |_| (
+                transform,
+                material,
+                teapot_loader.load("resources/meshes/triangle.mesh").unwrap())
+        )
+    );
+
+    world.insert(
+        (),
+        (0..1).map(|_| (camera,))
+    );
+
 
     let mut event_pump = sdl.event_pump().map_err(err_msg)?;
     'main: loop {
@@ -61,16 +108,30 @@ fn run() -> Result<(), failure::Error> {
                     ..
                 } => {
                     viewport.update_size(w, h);
-                    viewport.set_used(&gl);
+                    let mut cam_query = <(Write<core_components::Camera>,)>::query();
+
+                    for (mut camera,) in cam_query.iter(&mut world) {
+                        camera.update_perspective(
+                            60.,
+                            viewport.w as f32 / viewport.h as f32,
+                            0.1,
+                            100.
+                        );
+                    }
+
+                    viewport.set_used();
                 },
                 _ => {},
             }
         }
+        let mut query = <(Write<core_components::Transform>, Read<core_components::IndexedMesh>)>::query();
 
-        color_buffer.clear(&gl);
+        for (mut transform, _) in query.iter(&mut world) {
+            transform.rotate(0., 0.01, 0.);
+        }
 
-        teapot_render.render();
-
+        color_buffer.clear();
+        renderer.run(&world);
         window.gl_swap_window();
     }
 

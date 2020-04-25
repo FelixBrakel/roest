@@ -14,13 +14,11 @@ pub enum Error {
     CanNotDetermineShaderTypeForResource { name: String },
 }
 
-pub struct ShaderLoader {
-    gl: gl::Gl,
-}
+pub struct ShaderLoader { }
 
 impl ShaderLoader {
-    pub fn new(gl: gl::Gl) -> Self {
-        ShaderLoader { gl }
+    pub fn new() -> Self {
+        ShaderLoader {  }
     }
 }
 
@@ -44,7 +42,7 @@ impl Loader for ShaderLoader {
 
         let shader_src = read_to_cstring(&name)
             .map_err(|e| Error::ResourceLoad { name: name_path.to_string_lossy().into_owned(), inner: e })?;
-        Shader::load_source(self.gl.clone(), &shader_src, shader_kind)
+        Shader::load_source(&shader_src, shader_kind)
             .map_err(|e| Error::Shader { name: name_path.to_string_lossy().into_owned(), inner: e })
     }
 }

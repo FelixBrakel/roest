@@ -10,37 +10,55 @@ pub enum Error {
 }
 
 pub struct Program {
-    gl: gl::Gl,
     id: gl::types::GLuint,
 }
 
+pub trait GlUniform {
+    fn gl_uniform(&self);
+
+    fn from_uniform(program: &Program) -> Self;
+}
+
 impl Program {
-    pub fn load_shaders(gl: gl::Gl, shaders: &[Shader]) -> Result<Self, Error> {
-        let id = unsafe { gl.CreateProgram() };
+    pub fn set_defaults<D: GlUniform>(&self, defaults: &D) {
+        defaults.gl_uniform();
+    }
+
+    pub fn set_material<M: GlUniform>(&self, material: &M) {
+        material.gl_uniform();
+    }
+
+    pub fn from_shaders(shaders: &[Shader]) -> Result<Self, Error> {
+        let id = Self::load_shaders(shaders).unwrap();
+        Ok(Program { id })
+    }
+
+    fn load_shaders(shaders: &[Shader]) -> Result<gl::types::GLuint, Error> {
+        let id = unsafe { gl::CreateProgram() };
         for shader in shaders {
             unsafe {
-                gl.AttachShader(id, shader.id());
+                gl::AttachShader(id, shader.id());
             }
         }
 
         unsafe {
-            gl.LinkProgram(id);
+            gl::LinkProgram(id);
         }
 
         let mut success: gl::types::GLint = 1;
         unsafe {
-            gl.GetProgramiv(id, gl::LINK_STATUS, &mut success);
+            gl::GetProgramiv(id, gl::LINK_STATUS, &mut success);
         }
 
         if success == 0 {
             let mut len: gl::types::GLint = 0;
             unsafe  {
-                gl.GetProgramiv(id, gl::INFO_LOG_LENGTH, &mut len);
+                gl::GetProgramiv(id, gl::INFO_LOG_LENGTH, &mut len);
             }
 
             let error = create_initialized_cstring(len as usize);
             unsafe {
-                gl.GetProgramInfoLog(
+                gl::GetProgramInfoLog(
                     id,
                     len,
                     std::ptr::null_mut(),
@@ -53,15 +71,15 @@ impl Program {
 
         for shader in shaders {
             unsafe {
-                gl.DetachShader(id, shader.id());
+                gl::DetachShader(id, shader.id());
             }
         }
-        Ok(Program { gl, id })
+        Ok(id)
     }
 
     pub fn set_used(&self) {
         unsafe {
-            self.gl.UseProgram(self.id);
+            gl::UseProgram(self.id);
         }
     }
 
@@ -73,7 +91,7 @@ impl Program {
 impl Drop for Program {
     fn drop(&mut self) {
         unsafe {
-            self.gl.DeleteProgram(self.id);
+            gl::DeleteProgram(self.id);
         }
     }
 }

@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use gl::Gl;
 use crate::Program;
 
 #[allow(non_camel_case_types)]
@@ -16,9 +15,9 @@ impl u32_ {
 }
 
 impl u32_ {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribIPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribIPointer(
             location as gl::types::GLuint,
             1,                // the number of components per generic vertex attribute
             gl::UNSIGNED_INT, // data type
@@ -27,16 +26,16 @@ impl u32_ {
         );
     }
 
-    pub unsafe fn gl_uniform(&self, gl: &Gl, location: usize) {
-        gl.Uniform1ui(
+    pub unsafe fn gl_uniform(&self, location: usize) {
+        gl::Uniform1ui(
             location as gl::types::GLint,
             self.d0 as gl::types::GLuint
         );
     }
 
-    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> Self {
+    pub unsafe fn gl_get_uniform(program: &Program, location: usize) -> Self {
         let mut buf: u32 = 0;
-        gl.GetUniformuiv(
+        gl::GetUniformuiv(
             program.get_id(),
             location as gl::types::GLint,
             &mut buf as *mut gl::types::GLuint
@@ -67,9 +66,9 @@ impl u32_u32 {
 }
 
 impl u32_u32 {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribIPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribIPointer(
             location as gl::types::GLuint,
             2,                // the number of components per generic vertex attribute
             gl::UNSIGNED_INT, // data type
@@ -78,20 +77,21 @@ impl u32_u32 {
         );
     }
 
-    pub unsafe fn gl_uniform(&self, gl: &Gl, location: usize) {
-        gl.Uniform2ui(
+    pub unsafe fn gl_uniform(&self, location: usize) {
+        gl::Uniform2ui(
             location as gl::types::GLint,
             self.d0 as gl::types::GLuint,
             self.d1 as gl::types::GLuint
         );
     }
 
-    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> Self {
+    pub unsafe fn gl_get_uniform(program: &Program, location: usize) -> Self {
         let mut buf: Vec<u32> = Vec::with_capacity(2);
-        gl.GetUniformuiv(
+        buf.resize(2, 0);
+        gl::GetUniformuiv(
             program.get_id(),
             location as gl::types::GLint,
-            buf.as_ptr() as *mut gl::types::GLuint
+            buf.as_mut_ptr() as *mut gl::types::GLuint
         );
 
         return (buf[0], buf[1]).into()
@@ -120,9 +120,9 @@ impl u32_u32_u32 {
 }
 
 impl u32_u32_u32 {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribIPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribIPointer(
             location as gl::types::GLuint,
             3,                // the number of components per generic vertex attribute
             gl::UNSIGNED_INT, // data type
@@ -131,8 +131,8 @@ impl u32_u32_u32 {
         );
     }
 
-    pub unsafe fn gl_uniform(&self, gl: &Gl, location: usize) {
-        gl.Uniform3ui(
+    pub unsafe fn gl_uniform(&self, location: usize) {
+        gl::Uniform3ui(
             location as gl::types::GLint,
             self.d0 as gl::types::GLuint,
             self.d1 as gl::types::GLuint,
@@ -140,12 +140,13 @@ impl u32_u32_u32 {
         );
     }
 
-    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> Self {
+    pub unsafe fn gl_get_uniform(program: &Program, location: usize) -> Self {
         let mut buf: Vec<u32> = Vec::with_capacity(3);
-        gl.GetUniformuiv(
+        buf.resize(3, 0);
+        gl::GetUniformuiv(
             program.get_id(),
             location as gl::types::GLint,
-            buf.as_ptr() as *mut gl::types::GLuint
+            buf.as_mut_ptr() as *mut gl::types::GLuint
         );
 
         return (buf[0], buf[1], buf[2]).into()
@@ -175,9 +176,9 @@ impl u32_u32_u32_u32 {
 }
 
 impl u32_u32_u32_u32 {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribIPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribIPointer(
             location as gl::types::GLuint,
             4,                // the number of components per generic vertex attribute
             gl::UNSIGNED_INT, // data type
@@ -185,8 +186,8 @@ impl u32_u32_u32_u32 {
             offset as *const gl::types::GLvoid,
         );
     }
-    pub unsafe fn gl_uniform(&self, gl: &Gl, location: usize) {
-        gl.Uniform4ui(
+    pub unsafe fn gl_uniform(&self, location: usize) {
+        gl::Uniform4ui(
             location as gl::types::GLint,
             self.d0 as gl::types::GLuint,
             self.d1 as gl::types::GLuint,
@@ -195,12 +196,13 @@ impl u32_u32_u32_u32 {
         );
     }
 
-    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> Self {
+    pub unsafe fn gl_get_uniform(program: &Program, location: usize) -> Self {
         let mut buf: Vec<u32> = Vec::with_capacity(4);
-        gl.GetUniformuiv(
+        buf.resize(4, 0);
+        gl::GetUniformuiv(
             program.get_id(),
             location as gl::types::GLint,
-            buf.as_ptr() as *mut gl::types::GLuint
+            buf.as_mut_ptr() as *mut gl::types::GLuint
         );
 
         return (buf[0], buf[1], buf[2], buf[3]).into()

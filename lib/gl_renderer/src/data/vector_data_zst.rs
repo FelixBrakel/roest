@@ -1,6 +1,5 @@
 use super::vector_data;
 use crate::data::ZSTVariant;
-use gl::Gl;
 use crate::Program;
 
 #[allow(non_camel_case_types)]
@@ -14,9 +13,9 @@ impl ZSTVariant for i32_ {
 pub struct i32_i32;
 
 impl i32_ {
-    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> vector_data::i32_ {
+    pub unsafe fn gl_get_uniform(program: &Program, location: usize) -> vector_data::i32_ {
         let mut buf= 0;
-        gl.GetUniformiv(
+        gl::GetUniformiv(
             program.get_id(),
             location as gl::types::GLint,
             &mut buf as *mut gl::types::GLint
@@ -31,12 +30,13 @@ impl ZSTVariant for i32_i32 {
 }
 
 impl i32_i32 {
-    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> vector_data::i32_i32 {
+    pub unsafe fn gl_get_uniform(program: &Program, location: usize) -> vector_data::i32_i32 {
         let mut buf: Vec<i32> = Vec::with_capacity(2);
-        gl.GetUniformiv(
+        buf.resize(2, 0);
+        gl::GetUniformiv(
             program.get_id(),
             location as gl::types::GLint,
-            buf.as_ptr() as *mut gl::types::GLint
+            buf.as_mut_ptr() as *mut gl::types::GLint
         );
 
         return (buf[0], buf[1]).into()
@@ -47,12 +47,13 @@ impl i32_i32 {
 pub struct i32_i32_i32;
 
 impl i32_i32_i32 {
-    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> vector_data::i32_i32_i32 {
+    pub unsafe fn gl_get_uniform(program: &Program, location: usize) -> vector_data::i32_i32_i32 {
         let mut buf: Vec<i32> = Vec::with_capacity(3);
-        gl.GetUniformiv(
+        buf.resize(3, 0);
+        gl::GetUniformiv(
             program.get_id(),
             location as gl::types::GLint,
-            buf.as_ptr() as *mut gl::types::GLint
+            buf.as_mut_ptr() as *mut gl::types::GLint
         );
 
         return (buf[0], buf[1], buf[2]).into()
@@ -67,12 +68,13 @@ impl ZSTVariant for i32_i32_i32 {
 pub struct i32_i32_i32_i32;
 
 impl i32_i32_i32_i32 {
-    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> vector_data::i32_i32_i32_i32 {
+    pub unsafe fn gl_get_uniform(program: &Program, location: usize) -> vector_data::i32_i32_i32_i32 {
         let mut buf: Vec<i32> = Vec::with_capacity(4);
-        gl.GetUniformiv(
+        buf.resize(4, 0);
+        gl::GetUniformiv(
             program.get_id(),
             location as gl::types::GLint,
-            buf.as_ptr() as *mut gl::types::GLint
+            buf.as_mut_ptr() as *mut gl::types::GLint
         );
 
         return (buf[0], buf[1], buf[2], buf[3]).into()
@@ -87,9 +89,9 @@ impl ZSTVariant for i32_i32_i32_i32 {
 pub struct u32_;
 
 impl u32_ {
-    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> vector_data::u32_ {
+    pub unsafe fn gl_get_uniform(program: &Program, location: usize) -> vector_data::u32_ {
         let mut buf: u32 = 0;
-        gl.GetUniformuiv(
+        gl::GetUniformuiv(
             program.get_id(),
             location as gl::types::GLint,
             &mut buf as *mut gl::types::GLuint
@@ -107,12 +109,13 @@ impl ZSTVariant for u32_ {
 pub struct u32_u32;
 
 impl u32_u32 {
-    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> vector_data::u32_u32 {
+    pub unsafe fn gl_get_uniform(program: &Program, location: usize) -> vector_data::u32_u32 {
         let mut buf: Vec<u32> = Vec::with_capacity(2);
-        gl.GetUniformuiv(
+        buf.resize(2, 0);
+        gl::GetUniformuiv(
             program.get_id(),
             location as gl::types::GLint,
-            buf.as_ptr() as *mut gl::types::GLuint
+            buf.as_mut_ptr() as *mut gl::types::GLuint
         );
 
         return (buf[0], buf[1]).into()
@@ -127,12 +130,13 @@ impl ZSTVariant for u32_u32 {
 pub struct u32_u32_u32;
 
 impl u32_u32_u32 {
-    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> vector_data::u32_u32_u32 {
+    pub unsafe fn gl_get_uniform(program: &Program, location: usize) -> vector_data::u32_u32_u32 {
         let mut buf: Vec<u32> = Vec::with_capacity(3);
-        gl.GetUniformuiv(
+        buf.resize(3, 0);
+        gl::GetUniformuiv(
             program.get_id(),
             location as gl::types::GLint,
-            buf.as_ptr() as *mut gl::types::GLuint
+            buf.as_mut_ptr() as *mut gl::types::GLuint
         );
 
         return (buf[0], buf[1], buf[2]).into()
@@ -147,12 +151,13 @@ impl ZSTVariant for u32_u32_u32 {
 pub struct u32_u32_u32_u32;
 
 impl u32_u32_u32_u32 {
-    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> vector_data::u32_u32_u32_u32 {
+    pub unsafe fn gl_get_uniform(program: &Program, location: usize) -> vector_data::u32_u32_u32_u32 {
         let mut buf: Vec<u32> = Vec::with_capacity(4);
-        gl.GetUniformuiv(
+        buf.resize(4, 0);
+        gl::GetUniformuiv(
             program.get_id(),
             location as gl::types::GLint,
-            buf.as_ptr() as *mut gl::types::GLuint
+            buf.as_mut_ptr() as *mut gl::types::GLuint
         );
 
         return (buf[0], buf[1], buf[2], buf[3]).into()
@@ -167,9 +172,9 @@ impl ZSTVariant for u32_u32_u32_u32 {
 pub struct f32_;
 
 impl f32_ {
-    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> vector_data::f32_ {
+    pub unsafe fn gl_get_uniform(program: &Program, location: usize) -> vector_data::f32_ {
         let mut buf = 0_f32;
-        gl.GetUniformfv(
+        gl::GetUniformfv(
             program.get_id(),
             location as gl::types::GLint,
             &mut buf as *mut gl::types::GLfloat
@@ -187,12 +192,13 @@ impl ZSTVariant for f32_ {
 pub struct f32_f32;
 
 impl f32_f32 {
-    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> vector_data::f32_f32 {
+    pub unsafe fn gl_get_uniform(program: &Program, location: usize) -> vector_data::f32_f32 {
         let mut buf: Vec<f32> = Vec::with_capacity(2);
-        gl.GetUniformfv(
+        buf.resize(2, 0.);
+        gl::GetUniformfv(
             program.get_id(),
             location as gl::types::GLint,
-            buf.as_ptr() as *mut gl::types::GLfloat
+            buf.as_mut_ptr() as *mut gl::types::GLfloat
         );
 
         return (buf[0], buf[1]).into()
@@ -207,12 +213,13 @@ impl ZSTVariant for f32_f32 {
 pub struct f32_f32_f32;
 
 impl f32_f32_f32 {
-    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> vector_data::f32_f32_f32 {
+    pub unsafe fn gl_get_uniform(program: &Program, location: usize) -> vector_data::f32_f32_f32 {
         let mut buf: Vec<f32> = Vec::with_capacity(3);
-        gl.GetUniformfv(
+        buf.resize(3, 0.);
+        gl::GetUniformfv(
             program.get_id(),
             location as gl::types::GLint,
-            buf.as_ptr() as *mut gl::types::GLfloat
+            buf.as_mut_ptr() as *mut gl::types::GLfloat
         );
 
         return (buf[0], buf[1], buf[2]).into()
@@ -227,12 +234,13 @@ impl ZSTVariant for f32_f32_f32 {
 pub struct f32_f32_f32_f32;
 
 impl f32_f32_f32_f32 {
-    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> vector_data::f32_f32_f32_f32 {
+    pub unsafe fn gl_get_uniform(program: &Program, location: usize) -> vector_data::f32_f32_f32_f32 {
         let mut buf: Vec<f32> = Vec::with_capacity(4);
-        gl.GetUniformfv(
+        buf.resize(4, 0.);
+        gl::GetUniformfv(
             program.get_id(),
             location as gl::types::GLint,
-            buf.as_ptr() as *mut gl::types::GLfloat
+            buf.as_mut_ptr() as *mut gl::types::GLfloat
         );
 
         return (buf[0], buf[1], buf[2], buf[3]).into()

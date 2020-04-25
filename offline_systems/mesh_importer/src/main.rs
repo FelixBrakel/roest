@@ -1,7 +1,7 @@
 use std::path::Path;
 use clap::{App, load_yaml};
 use gl_renderer::{IndexedVertArray, VertexAttribPointers};
-use gl_renderer::data::vertex_data::ColoredVertex;
+use gl_renderer::vertex::NormalVertex;
 use std::fs;
 use std::io::Write;
 use std::f32;
@@ -17,7 +17,7 @@ fn main() {
     let m = &obj_file[0].mesh;
 
     let mut tuples: Vec<(f32, f32, f32)> = Vec::with_capacity(m.indices.len() / 3);
-    let mut verts: Vec<ColoredVertex> = Vec::with_capacity(m.indices.len() / 3);
+    let mut verts: Vec<NormalVertex> = Vec::with_capacity(m.indices.len() / 3);
 
     let mut max: f32 = 0.;
     let mut min: f32 = 0.;
@@ -51,14 +51,18 @@ fn main() {
         min = min.min(*x).min(*y).min(*z);
     }
 
-    for (x, y, z) in tuples {
+    for (i, (x, y, z)) in tuples.iter().enumerate() {
         let x_normalized = (x - min) / (max - min) * 2. - 1.;
         let y_normalized = (y - min) / (max - min) * 2. - 1.;
         let z_normalized = (z - min) / (max - min) * 2. - 1.;
 
-        verts.push(ColoredVertex {
+        let x_n = m.normals[i*3];
+        let y_n = m.normals[i*3 + 1];
+        let z_n = m.normals[i*3 + 2];
+
+        verts.push(NormalVertex {
             pos: (x_normalized, y_normalized, z_normalized).into(),
-            clr: (0.5, 0.5, 0.5, 0.5).into()
+            normal: (x_n, y_n, z_n).into()
         });
     }
 

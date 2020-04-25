@@ -15,15 +15,15 @@ impl ColorBuffer {
         self.color = color.fixed_resize::<na::U4, na::U1>(1.0);
     }
 
-    pub fn set_used(&self, gl: &gl::Gl) {
+    pub fn set_used(&self) {
         unsafe {
-            gl.ClearColor(self.color.x, self.color.y, self.color.z,  self.color.w);
+            gl::ClearColor(self.color.x, self.color.y, self.color.z,  self.color.w);
         }
     }
 
-    pub fn clear(&self, gl: &gl::Gl) {
+    pub fn clear(&self) {
         unsafe {
-            gl.Clear(gl::COLOR_BUFFER_BIT);
+            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
     }
 }

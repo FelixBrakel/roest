@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use gl::Gl;
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
@@ -15,9 +14,10 @@ impl i8_{
 }
 
 impl i8_ {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribIPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        // let gl = *gl_m.lock().unwrap();
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribIPointer(
             location as gl::types::GLuint,
             1,
             gl::BYTE,
@@ -48,9 +48,9 @@ impl i8_i8 {
 }
 
 impl i8_i8 {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribIPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribIPointer(
             location as gl::types::GLuint,
             2,
             gl::BYTE,
@@ -82,9 +82,9 @@ impl i8_i8_i8 {
 }
 
 impl i8_i8_i8 {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribIPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribIPointer(
             location as gl::types::GLuint,
             3,
             gl::BYTE,
@@ -117,9 +117,9 @@ impl i8_i8_i8_i8 {
 }
 
 impl i8_i8_i8_i8 {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribIPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribIPointer(
             location as gl::types::GLuint,
             4,
             gl::BYTE,

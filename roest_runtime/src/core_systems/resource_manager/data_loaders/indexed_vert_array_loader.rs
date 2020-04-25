@@ -2,7 +2,6 @@ use gl_renderer::{IndexedVertArray, VertexAttribPointers};
 use crate::core_systems::resource_manager;
 use crate::core_systems::resource_manager::{Loader, open_file};
 use std::path::Path;
-use serde::{Serialize, Deserialize, Deserializer};
 use failure::Fail;
 use failure::_core::marker::PhantomData;
 use serde::de::DeserializeOwned;

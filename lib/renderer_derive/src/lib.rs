@@ -56,7 +56,7 @@ fn generate_v_attr_ptr_impl(ast: &syn::DeriveInput) -> TokenStream {
         #[automatically_derived]
         #[allow(unused_qualifications)]
         impl _gl_renderer::VertexAttribPointers for #ident #generics #where_clause {
-            fn vertex_attrib_pointers(gl: &::gl::Gl) {
+            fn vertex_attrib_pointers() {
                 let stride = ::std::mem::size_of::<Self>();
                 let offset = 0;
 
@@ -104,7 +104,7 @@ fn generate_vertex_attrib_pointer_call(field: &syn::Field) -> proc_macro2::Token
     let gen = quote! {
         let location = #val_literal;
         unsafe {
-            #field_ty::vertex_attrib_pointer(gl, stride, location, offset);
+            #field_ty::vertex_attrib_pointer(stride, location, offset);
         }
         let offset = offset + ::std::mem::size_of::<#field_ty>();
     };

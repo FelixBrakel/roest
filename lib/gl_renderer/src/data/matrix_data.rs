@@ -1,174 +1,124 @@
-use gl::Gl;
 use crate::Program;
+use std::slice::from_raw_parts;
+use std::mem::size_of;
+use nalgebra as na;
 
-#[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug)]
-#[repr(C, packed)]
-pub struct mat2 {
-    pub d00: f32,
-    pub d10: f32,
-    pub d01: f32,
-    pub d11: f32,
+pub trait GlMat {
+    unsafe fn gl_uniform(&self, location: usize);
+    /// Can return nonsensical data if the uniform at the corresponding location has not yet been set
+    /// before calling this function
+    unsafe fn from_gl_uniform(program: &Program, location: usize) -> Self;
 }
 
-impl mat2 {
-    pub fn new(d00: f32, d10: f32, d01: f32, d11: f32) -> Self {
-        mat2 { d00, d10, d01, d11 }
-    }
+pub trait AsColSlices {
+    fn as_col_slices(&self) -> &[&[u8]];
+}
 
-    pub unsafe fn gl_uniform(&self, gl: &Gl, location: usize) {
-        gl.UniformMatrix2fv(
+#[allow(non_camel_case_types)]
+pub type mat2 = na::Matrix2<f32>;
+
+impl GlMat for mat2 {
+    unsafe fn gl_uniform(&self, location: usize) {
+        gl::UniformMatrix2fv(
             location as gl::types::GLint,
             1,
             gl::FALSE,
-            &self.d00 as *const gl::types::GLfloat
+            self.as_slice().as_ptr() as *const gl::types::GLfloat
         );
     }
 
-    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> Self {
+    unsafe fn from_gl_uniform(program: &Program, location: usize) -> Self {
         let mut buf: Vec<f32> = Vec::with_capacity(4);
-        gl.GetUniformfv(
+        buf.resize(4, 0.);
+        gl::GetUniformfv(
             program.get_id(),
             location as gl::types::GLint,
-            buf.as_ptr() as *mut gl::types::GLfloat
+            buf.as_mut_ptr() as *mut gl::types::GLfloat
         );
 
-        return (buf[0], buf[1], buf[2], buf[3]).into()
+        return mat2::new(
+            buf[0], buf[1],
+            buf[2], buf[3]
+        )
     }
 }
 
-impl From<(f32, f32, f32, f32)> for mat2 {
-    fn from(other: (f32, f32, f32, f32)) -> Self {
-        Self::new(other.0, other.1, other.2, other.3)
-    }
-}
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug)]
-#[repr(C, packed)]
-pub struct mat3 {
-    pub d00: f32,
-    pub d10: f32,
-    pub d20: f32,
-    pub d01: f32,
-    pub d11: f32,
-    pub d21: f32,
-    pub d02: f32,
-    pub d12: f32,
-    pub d22: f32,
-}
+pub type mat3 = na::Matrix3<f32>;
 
-impl mat3 {
-    pub fn new(
-        d00: f32, d10: f32, d20: f32,
-        d01: f32, d11: f32, d21: f32,
-        d02: f32, d12: f32, d22: f32
-    ) -> Self {
-        mat3 { d00, d10, d20, d01, d11, d21, d02, d12, d22 }
-    }
-
-    pub unsafe fn gl_uniform(&self, gl: &Gl, location: usize) {
-        gl.UniformMatrix3fv(
+impl GlMat for mat3 {
+    unsafe fn gl_uniform(&self, location: usize) {
+        gl::UniformMatrix3fv(
             location as gl::types::GLint,
             1,
             gl::FALSE,
-            &self.d00 as *const gl::types::GLfloat
+            self.as_slice().as_ptr() as *const gl::types::GLfloat
         );
     }
 
-    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> Self {
+    unsafe fn from_gl_uniform(program: &Program, location: usize) -> Self {
         let mut buf: Vec<f32> = Vec::with_capacity(9);
-        gl.GetUniformfv(
+        buf.resize(9, 0.);
+        gl::GetUniformfv(
             program.get_id(),
             location as gl::types::GLint,
-            buf.as_ptr() as *mut gl::types::GLfloat
+            buf.as_mut_ptr() as *mut gl::types::GLfloat
         );
 
-        return (buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8]).into()
-    }
-}
-
-impl From<(f32, f32, f32, f32, f32, f32, f32, f32, f32)> for mat3 {
-    fn from(other: (f32, f32, f32, f32, f32, f32, f32, f32, f32)) -> Self {
-        Self::new(
-            other.0, other.1, other.2,
-            other.3, other.4, other.5,
-            other.6, other.7, other.8
+        return mat3::new(
+            buf[0], buf[1], buf[2],
+            buf[3], buf[4], buf[5],
+            buf[6], buf[7], buf[8]
         )
     }
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug)]
-#[repr(C, packed)]
-pub struct mat4 {
-    pub d00: f32,
-    pub d10: f32,
-    pub d20: f32,
-    pub d30: f32,
-    pub d01: f32,
-    pub d11: f32,
-    pub d21: f32,
-    pub d31: f32,
-    pub d02: f32,
-    pub d12: f32,
-    pub d22: f32,
-    pub d32: f32,
-    pub d03: f32,
-    pub d13: f32,
-    pub d23: f32,
-    pub d33: f32,
-}
+pub type mat4 = na::Matrix4<f32>;
 
-impl mat4 {
-    pub fn new(
-        d00: f32, d10: f32, d20: f32, d30: f32,
-        d01: f32, d11: f32, d21: f32, d31: f32,
-        d02: f32, d12: f32, d22: f32, d32: f32,
-        d03: f32, d13: f32, d23: f32, d33: f32
-    ) -> Self {
-        mat4 {
-            d00, d10, d20, d30,
-            d01, d11, d21, d31,
-            d02, d12, d22, d32,
-            d03, d13, d23, d33
-        }
-    }
-
-    pub unsafe fn gl_uniform(&self, gl: &Gl, location: usize) {
-        gl.UniformMatrix4fv(
+impl GlMat for mat4 {
+    unsafe fn gl_uniform(&self, location: usize) {
+        gl::UniformMatrix4fv(
             location as gl::types::GLint,
             1,
             gl::FALSE,
-            &self.d00 as *const gl::types::GLfloat
+            self.as_slice().as_ptr() as *const gl::types::GLfloat
         );
     }
 
-    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> Self {
+    unsafe fn from_gl_uniform(program: &Program, location: usize) -> Self {
         let mut buf: Vec<f32> = Vec::with_capacity(16);
-        gl.GetUniformfv(
+        buf.resize(16, 0.);
+        gl::GetUniformfv(
             program.get_id(),
             location as gl::types::GLint,
-            buf.as_ptr() as *mut gl::types::GLfloat
+            buf.as_mut_ptr() as *mut gl::types::GLfloat
         );
 
-        (
+        mat4::new(
             buf[0], buf[1], buf[2], buf[3],
             buf[4], buf[5], buf[6], buf[7],
             buf[8], buf[9], buf[10], buf[11],
             buf[12], buf[13], buf[14], buf[15]
         )
-            .into()
     }
 }
 
-impl From<(f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32)> for mat4 {
-    fn from(other: (f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32)) -> Self {
-        Self::new(
-            other.0, other.1, other.2, other.3,
-            other.4, other.5, other.6, other.7,
-            other.8, other.9, other.10, other.11,
-            other.12, other.13, other.14, other.15,
-        )
+impl AsColSlices for mat4 {
+    fn as_col_slices(&self) -> &[&[u8]] {
+        let mvp_col1 = self.columns(0, 1).as_slice();
+        let mvp_col2 = self.columns(1, 1).as_slice();
+        let mvp_col3 = self.columns(2, 1).as_slice();
+        let mvp_col4 = self.columns(3, 1).as_slice();
+
+        unsafe {
+            &[
+                from_raw_parts(mvp_col1.as_ptr() as *const u8, mvp_col1.len() * size_of::<f32>()),
+                from_raw_parts(mvp_col2.as_ptr() as *const u8, mvp_col2.len() * size_of::<f32>()),
+                from_raw_parts(mvp_col3.as_ptr() as *const u8, mvp_col3.len() * size_of::<f32>()),
+                from_raw_parts(mvp_col4.as_ptr() as *const u8, mvp_col4.len() * size_of::<f32>()),
+            ]
+        }
     }
 }

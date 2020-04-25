@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use gl::Gl;
 use crate::Program;
 
 #[allow(non_camel_case_types)]
@@ -16,9 +15,9 @@ impl f32_ {
 }
 
 impl f32_ {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribPointer(
             location as gl::types::GLuint,
             1,         // the number of components per generic vertex attribute
             gl::FLOAT, // data type
@@ -28,16 +27,16 @@ impl f32_ {
         );
     }
 
-    pub unsafe fn gl_uniform(&self, gl: &Gl, location: usize) {
-        gl.Uniform1f(
+    pub unsafe fn gl_uniform(&self, location: usize) {
+        gl::Uniform1f(
             location as gl::types::GLint,
             self.d0 as gl::types::GLfloat
         );
     }
 
-    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> Self {
+    pub unsafe fn from_gl_uniform(program: &Program, location: usize) -> Self {
         let mut buf = 0_f32;
-        gl.GetUniformfv(
+        gl::GetUniformfv(
             program.get_id(),
             location as gl::types::GLint,
             &mut buf as *mut gl::types::GLfloat
@@ -68,9 +67,9 @@ impl f32_f32 {
 }
 
 impl f32_f32 {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribPointer(
             location as gl::types::GLuint,
             2,         // the number of components per generic vertex attribute
             gl::FLOAT, // data type
@@ -80,20 +79,21 @@ impl f32_f32 {
         );
     }
 
-    pub unsafe fn gl_uniform(&self, gl: &Gl, location: usize) {
-        gl.Uniform2f(
+    pub unsafe fn gl_uniform(&self, location: usize) {
+        gl::Uniform2f(
             location as gl::types::GLint,
             self.d0 as gl::types::GLfloat,
             self.d1 as gl::types::GLfloat
         );
     }
 
-    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> Self {
+    pub unsafe fn from_gl_uniform(program: &Program, location: usize) -> Self {
         let mut buf: Vec<f32> = Vec::with_capacity(2);
-        gl.GetUniformfv(
+        buf.resize(2, 0.);
+        gl::GetUniformfv(
             program.get_id(),
             location as gl::types::GLint,
-            buf.as_ptr() as *mut gl::types::GLfloat
+            buf.as_mut_ptr() as *mut gl::types::GLfloat
         );
 
         return (buf[0], buf[1]).into()
@@ -122,9 +122,9 @@ impl f32_f32_f32 {
 }
 
 impl f32_f32_f32 {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribPointer(
             location as gl::types::GLuint,
             3,         // the number of components per generic vertex attribute
             gl::FLOAT, // data type
@@ -134,8 +134,8 @@ impl f32_f32_f32 {
         );
     }
 
-    pub unsafe fn gl_uniform(&self, gl: &Gl, location: usize) {
-        gl.Uniform3f(
+    pub unsafe fn gl_uniform(&self, location: usize) {
+        gl::Uniform3f(
             location as gl::types::GLint,
             self.d0 as gl::types::GLfloat,
             self.d1 as gl::types::GLfloat,
@@ -143,12 +143,13 @@ impl f32_f32_f32 {
         );
     }
 
-    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> Self {
+    pub unsafe fn from_gl_uniform(program: &Program, location: usize) -> Self {
         let mut buf: Vec<f32> = Vec::with_capacity(3);
-        gl.GetUniformfv(
+        buf.resize(3, 0.);
+        gl::GetUniformfv(
             program.get_id(),
             location as gl::types::GLint,
-            buf.as_ptr() as *mut gl::types::GLfloat
+            buf.as_mut_ptr() as *mut gl::types::GLfloat
         );
 
         return (buf[0], buf[1], buf[2]).into()
@@ -178,9 +179,9 @@ impl f32_f32_f32_f32 {
 }
 
 impl f32_f32_f32_f32 {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribPointer(
             location as gl::types::GLuint,
             4,         // the number of components per generic vertex attribute
             gl::FLOAT, // data type
@@ -190,8 +191,8 @@ impl f32_f32_f32_f32 {
         );
     }
 
-    pub unsafe fn gl_uniform(&self, gl: &Gl, location: usize) {
-        gl.Uniform4f(
+    pub unsafe fn gl_uniform(&self, location: usize) {
+        gl::Uniform4f(
             location as gl::types::GLint,
             self.d0 as gl::types::GLfloat,
             self.d1 as gl::types::GLfloat,
@@ -200,12 +201,13 @@ impl f32_f32_f32_f32 {
         );
     }
 
-    pub unsafe fn gl_get_uniform(gl: &Gl, program: &Program, location: usize) -> Self {
+    pub unsafe fn from_gl_uniform(program: &Program, location: usize) -> Self {
         let mut buf: Vec<f32> = Vec::with_capacity(4);
-        gl.GetUniformfv(
+        buf.resize(4, 0.);
+        gl::GetUniformfv(
             program.get_id(),
             location as gl::types::GLint,
-            buf.as_ptr() as *mut gl::types::GLfloat
+            buf.as_mut_ptr() as *mut gl::types::GLfloat
         );
 
         return (buf[0], buf[1], buf[2], buf[3]).into()

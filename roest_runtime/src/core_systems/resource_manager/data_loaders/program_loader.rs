@@ -12,13 +12,11 @@ pub enum Error {
     Program { name: String, #[cause] inner: ProgramError }
 }
 
-pub struct ProgramLoader {
-    gl: gl::Gl,
-}
+pub struct ProgramLoader {  }
 
 impl ProgramLoader {
-    pub fn new(gl: gl::Gl) -> Self {
-        ProgramLoader { gl }
+    pub fn new() -> Self {
+        ProgramLoader {  }
     }
 }
 
@@ -36,12 +34,12 @@ impl Loader for ProgramLoader {
 
         let shaders = POSSIBLE_EXT.iter()
             .map(|file_extension| {
-                let loadable = ShaderLoader::new(self.gl.clone());
+                let loadable = ShaderLoader::new();
                 loadable.load( format!("{}{}", name_path.display(), file_extension))
             })
             .collect::<Result<Vec<Shader>, ShLoaderError>>().map_err(|e| Error::ShaderLoader { name: name_path.to_string_lossy().into_owned(), inner: e })?;
 
-        Program::load_shaders(self.gl.clone(), &shaders[..])
+        Program::from_shaders(&shaders[..])
             .map_err(|e| Error::Program { name: name_path.to_string_lossy().into_owned(), inner: e })
     }
 }

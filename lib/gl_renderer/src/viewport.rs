@@ -20,9 +20,9 @@ impl Viewport {
         self.h = h;
     }
 
-    pub fn set_used(&self, gl: &gl::Gl) {
+    pub fn set_used(&self) {
         unsafe {
-            gl.Viewport(self.x, self.y, self.w, self.h)
+            gl::Viewport(self.x, self.y, self.w, self.h)
         }
     }
 }

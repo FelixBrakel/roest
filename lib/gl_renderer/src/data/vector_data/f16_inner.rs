@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use gl::Gl;
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
@@ -15,9 +14,9 @@ impl f16_ {
 }
 
 impl f16_ {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribPointer(
             location as gl::types::GLuint,
             1,              // the number of components per generic vertex attribute
             gl::HALF_FLOAT, // data type
@@ -49,9 +48,9 @@ impl f16_f16 {
 }
 
 impl f16_f16 {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribPointer(
             location as gl::types::GLuint,
             2,              // the number of components per generic vertex attribute
             gl::HALF_FLOAT, // data type
@@ -84,9 +83,9 @@ impl f16_f16_f16 {
 }
 
 impl f16_f16_f16 {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribPointer(
             location as gl::types::GLuint,
             3,              // the number of components per generic vertex attribute
             gl::HALF_FLOAT, // data type
@@ -125,9 +124,9 @@ impl f16_f16_f16_f16 {
 }
 
 impl f16_f16_f16_f16 {
-    pub unsafe fn vertex_attrib_pointer(gl: &Gl, stride: usize, location: usize, offset: usize) {
-        gl.EnableVertexAttribArray(location as gl::types::GLuint);
-        gl.VertexAttribPointer(
+    pub unsafe fn vertex_attrib_pointer(stride: usize, location: usize, offset: usize) {
+        gl::EnableVertexAttribArray(location as gl::types::GLuint);
+        gl::VertexAttribPointer(
             location as gl::types::GLuint,
             4,              // the number of components per generic vertex attribute
             gl::HALF_FLOAT, // data type
