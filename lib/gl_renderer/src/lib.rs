@@ -8,9 +8,8 @@ mod shader;
 mod program;
 mod indexed_vert_array;
 mod color_buffer;
-mod uniform_struct_shared;
-mod uniform_buffer;
-mod uniform_struct_std140;
+pub mod uniform_struct_shared;
+pub mod uniform_buffer;
 
 pub use viewport::Viewport;
 pub use shader::{Shader, Error as ShaderError};

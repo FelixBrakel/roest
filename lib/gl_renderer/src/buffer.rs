@@ -55,6 +55,12 @@ impl<B> Buffer<B> where B: BufferType {
         }
     }
 
+    pub fn bind_base(&self, index: gl::types::GLuint) {
+        unsafe {
+            gl::BindBufferBase(gl::UNIFORM_BUFFER, index, self.vbo);
+        }
+    }
+
     pub fn static_draw_data<T>(&self, data: &[T]) {
         unsafe {
             gl::BufferData(

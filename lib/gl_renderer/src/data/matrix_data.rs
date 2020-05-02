@@ -1,5 +1,5 @@
 use crate::Program;
-use std::slice::from_raw_parts;
+use std::slice::{from_raw_parts};
 use std::mem::size_of;
 use nalgebra as na;
 
@@ -11,7 +11,7 @@ pub trait GlMat {
 }
 
 pub trait AsColSlices {
-    fn as_col_slices(&self) -> &[&[u8]];
+    fn as_col_slices(&self) -> Vec<&[u8]>;
 }
 
 #[allow(non_camel_case_types)]
@@ -106,18 +106,25 @@ impl GlMat for mat4 {
 }
 
 impl AsColSlices for mat4 {
-    fn as_col_slices(&self) -> &[&[u8]] {
-        let mvp_col1 = self.columns(0, 1).as_slice();
-        let mvp_col2 = self.columns(1, 1).as_slice();
-        let mvp_col3 = self.columns(2, 1).as_slice();
-        let mvp_col4 = self.columns(3, 1).as_slice();
+    fn as_col_slices(&self) -> Vec<&[u8]> {
+        let tmp = self.columns(0, 1);
+        let col1 = tmp.as_slice();
+
+        let tmp = self.columns(1, 1);
+        let col2 =  tmp.as_slice();
+
+        let tmp = self.columns(2, 1);
+        let col3 = tmp.as_slice();
+
+        let tmp = self.columns(3, 1);
+        let col4 =  tmp.as_slice();
 
         unsafe {
-            &[
-                from_raw_parts(mvp_col1.as_ptr() as *const u8, mvp_col1.len() * size_of::<f32>()),
-                from_raw_parts(mvp_col2.as_ptr() as *const u8, mvp_col2.len() * size_of::<f32>()),
-                from_raw_parts(mvp_col3.as_ptr() as *const u8, mvp_col3.len() * size_of::<f32>()),
-                from_raw_parts(mvp_col4.as_ptr() as *const u8, mvp_col4.len() * size_of::<f32>()),
+            vec![
+                from_raw_parts(col1.as_ptr() as *const u8, col1.len() * size_of::<f32>()),
+                from_raw_parts(col2.as_ptr() as *const u8, col2.len() * size_of::<f32>()),
+                from_raw_parts(col3.as_ptr() as *const u8, col3.len() * size_of::<f32>()),
+                from_raw_parts(col4.as_ptr() as *const u8, col4.len() * size_of::<f32>()),
             ]
         }
     }

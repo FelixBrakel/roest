@@ -15,4 +15,3 @@ failure = "0.1.7"
 vec-2-10-10-10 = "0.1.2"
 serde = { version = "1.0.106", features = ["derive"] }
 c_str_macro = "1.0.2"
-std140 = "0.2.2"

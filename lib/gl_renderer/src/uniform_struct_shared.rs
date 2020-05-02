@@ -1,59 +1,358 @@
 use crate::data::{matrix_data, vector_data};
-use crate::data::matrix_data::AsColSlices;
+use crate::data::matrix_data::{AsColSlices, GlMat};
 use std::ffi::{CString};
 use std::mem::size_of;
 use std::slice::from_raw_parts;
 use c_str_macro::c_str;
-use crate::uniform_buffer::{UniformLayoutShared, LayoutEnum, FieldType, UniformBlock};
+use crate::uniform_buffer::{UniformBlock};
 use crate::Program;
 use crate::data::vector_data::f32_f32_f32;
-use crate::buffer::UniformBuffer;
 use failure::_core::marker::PhantomData;
 
 pub struct TestStruct {
-    data: vector_data::f32_f32_f32,
-    other_data: vector_data::f32_f32_f32,
+    pub data: vector_data::f32_f32_f32,
+    pub other_data: vector_data::f32_f32_f32,
 }
 
 pub struct ShaderDefaultLayout {
-    mvp: matrix_data::mat4,
-    mv: matrix_data::mat4,
-    test_arr: [vector_data::f32_f32_f32; 2],
-    test_struct: TestStruct,
-    test_struct_arr: [TestStruct; 3]
+    pub mvp: matrix_data::mat4,
+    pub mv: matrix_data::mat4,
+    pub test_arr: [vector_data::f32_f32_f32; 2],
+    pub test_struct: TestStruct,
+    pub test_struct_arr: [TestStruct; 3]
 }
 
-pub trait GPUSettable {
-    fn set<T>(&self, data: &T);
-
-    fn buf<T>(&self, data: &T) -> &[u8];
+pub trait GPUVariant<'a> {
+    type Variant;
 }
 
-struct GPUTestStruct<'a> {
-    pub data: GPUBasic<'a, vector_data::f32_f32_f32>,
-    pub other_data: GPUBasic<'a, vector_data::f32_f32_f32>
+impl<'a> GPUVariant<'a> for vector_data::f32_f32_f32 {
+    type Variant = GPUBasic<'a, vector_data::f32_f32_f32>;
 }
 
-impl GPUSettable for GPUTestStruct {
+impl<'a, T: AsColSlices> GPUVariant<'a> for T {
+    type Variant = GPUMatrix<'a, T>;
+}
+
+impl<'a> GPUVariant<'a> for ShaderDefaultLayout {
+    type Variant = GPUShaderDefaultLayout<'a>;
+}
+
+impl<'a> GPUVariant<'a> for TestStruct {
+    type Variant = GPUTestStruct<'a>;
+}
+
+pub struct GPUMatrix<'a, M: AsColSlices> {
+    ub: &'a UniformBlock,
+    offset: gl::types::GLint,
+    stride: gl::types::GLint,
+    _marker: PhantomData<M>
+}
+
+impl<'a, M: AsColSlices> GPUMatrix<'a, M> {
+    fn from_name(program: &Program, name: &str, ub: &'a UniformBlock) -> Self {
+        let idx = unsafe {
+            UniformBlock::get_elem_indices(program, &[CString::new(name).unwrap()])[0]
+        };
+
+        let offset = unsafe {
+            UniformBlock::get_elem_offsets(program, &[idx])[0]
+        };
+
+        let stride = unsafe {
+            UniformBlock::get_elem_matrix_strides(program, &[idx])[0]
+        };
+
+        GPUMatrix {
+            ub,
+            offset,
+            stride,
+            _marker: PhantomData
+        }
+    }
+
+    fn from_params(offset: gl::types::GLint, stride: gl::types::GLint, ub: &'a UniformBlock) -> Self {
+        GPUMatrix {
+            ub,
+            offset,
+            stride,
+            _marker: PhantomData
+        }
+    }
+
+    pub fn set(&self, data: &M) {
+        self.ub.set_subset(&self.buf(data), self.offset as usize);
+    }
+
+    pub fn buf(&self, data: &M) -> Vec<u8> {
+        let slices = data.as_col_slices();
+        let mut buf: Vec<u8> = Vec::with_capacity(slices.len() * self.stride as usize);
+        buf.extend_from_slice(slices[0]);
+        let stride = self.stride as usize - slices[0].len();
+
+        for i in 1..slices.len() {
+            buf.resize(buf.len() + stride, 0);
+            buf.extend_from_slice(slices[i]);
+        }
+
+        buf
+    }
+}
+
+//NOTE: The generic parameter T here is the CPU Variant
+pub struct GPUBasic<'a, T> {
+    ub: &'a UniformBlock,
+    offset: gl::types::GLint,
+    _marker: PhantomData<T>
+}
+
+impl<'a, T> GPUBasic<'a, T> {
+    fn from_name(program: &Program, name: &str, ub: &'a UniformBlock) -> Self {
+        let idx = unsafe {
+            UniformBlock::get_elem_indices(program, &[CString::new(name).unwrap()])[0]
+        };
+
+        let offset = unsafe {
+            UniformBlock::get_elem_offsets(program, &[idx])[0]
+        };
+
+        GPUBasic {
+            ub,
+            offset,
+            _marker: PhantomData
+        }
+    }
+
+    fn from_params(offset: gl::types::GLint, ub: &'a UniformBlock) -> Self {
+        GPUBasic {
+            ub,
+            offset,
+            _marker: PhantomData
+        }
+    }
+
+    pub fn set(&self, data: &T) {
+        self.ub.set_subset(self.buf(data), self.offset as usize);
+    }
+
+    pub fn buf(&self, data: &T) -> &[u8] {
+        unsafe {
+            let tmp: *const T = data;
+            from_raw_parts(tmp as *const _, size_of::<T>())
+        }
+    }
+}
+
+pub trait GPUAggregate<'a> {
+    type Input;
+    fn from_name(program: &Program, name: &str, ub: &'a UniformBlock) -> Self;
+
+    fn set(&self, data: &Self::Input);
+}
+
+/// Struct containing the necessary handles to manage an array of basic types (excluding matrices) on the GPU with T
+/// being a type on the CPU side that implements the GPUVariant trait.
+pub struct GPUBasicArray<'a, T>
+    where T: GPUVariant<'a, Variant = GPUBasic<'a, T>>
+{
+    ub: &'a UniformBlock,
+    pub elems: Vec<T::Variant>,
+    stride: gl::types::GLint,
+    offset: gl::types::GLint
+}
+
+impl<'a, T> GPUBasicArray<'a, T>
+    where T: GPUVariant<'a, Variant = GPUBasic<'a, T>>
+{
+    /// constructs the array from the name of the variable on the GPU by querying all the parameters at runtime.
+    fn from_name(program: &Program, name: &str, len: usize, ub: &'a UniformBlock) -> Self {
+        let idx = unsafe {
+            UniformBlock::get_elem_indices(program, &[CString::new(name).unwrap()])[0]
+        };
+
+        let offset = unsafe {
+            UniformBlock::get_elem_offsets(program, &[idx])[0]
+        };
+
+        let stride = unsafe {
+            UniformBlock::get_elem_array_strides(program, &[idx])[0]
+        };
+
+        let mut elems = Vec::with_capacity(len);
+        for i in 0..len {
+            elems.push(GPUBasic::from_params(offset + stride * i as gl::types::GLint, ub))
+        }
+
+        GPUBasicArray {
+            ub,
+            elems,
+            stride,
+            offset,
+        }
+    }
+
+    /// Setter method for the entire array, calls buf so it doesn't have to make an API call for every element in the
+    /// buffer separately
+    pub fn set(&self, data: &[T]) {
+        self.ub.set_subset(&self.buf(data), self.offset as usize);
+    }
+
+    /// Used to create a buffer with the correct stride which can then be uploaded to the GPU in one go.
+    pub fn buf(&self, data: &[T]) -> Vec<u8> {
+        let mut buf = Vec::with_capacity(self.stride as usize * self.elems.len());
+        for (i, elem) in data.iter().enumerate() {
+            let slice = self.elems[i].buf(elem);
+            let slice_len = slice.len();
+            buf.extend(slice);
+            buf.resize(buf.len() + self.stride as usize - slice_len, 0);
+        }
+
+        buf
+    }
+}
+
+/// Struct containing the necessary handles to manage an array of matrices on the GPU with T
+/// being a matrix type on the CPU side that implements the GPUVariant trait as wel as the AsColSlices trait.
+/// The reason this does not fall under GPUBasicArray even though a matrix is a basic type in GLSL is that it
+/// needs some special logic to set up the buffer to account for matrix stride.,
+pub struct GPUMatrixArray<'a, T>
+    where T: GPUVariant<'a, Variant = GPUMatrix<'a, T>> + AsColSlices
+{
+    ub: &'a UniformBlock,
+    pub elems: Vec<T::Variant>,
+    stride: gl::types::GLint,
+    offset: gl::types::GLint
+}
+
+impl<'a, T> GPUMatrixArray<'a, T>
+    where T: GPUVariant<'a, Variant = GPUMatrix<'a, T>> + AsColSlices
+{
+    /// constructs the array from the name of the variable on the GPU by querying all the parameters at runtime.
+    fn from_name(program: &Program, name: &str, len: usize, ub: &'a UniformBlock) -> Self {
+        let idx = unsafe {
+            UniformBlock::get_elem_indices(program, &[CString::new(name).unwrap()])[0]
+        };
+
+        let offset = unsafe {
+            UniformBlock::get_elem_offsets(program, &[idx])[0]
+        };
+
+        let stride = unsafe {
+            UniformBlock::get_elem_array_strides(program, &[idx])[0]
+        };
+
+        let mat_stride = unsafe {
+            UniformBlock::get_elem_matrix_strides(program, &[idx])[0]
+        };
+
+
+        let mut elems = Vec::with_capacity(len);
+        for i in 0..len {
+            elems.push(GPUMatrix::from_params(offset + stride * i as i32, mat_stride, ub))
+        }
+
+        GPUMatrixArray {
+            ub,
+            elems,
+            stride,
+            offset,
+        }
+    }
+    /// Setter method for the entire array, calls buf so it doesn't have to make an API call for every element in the
+    /// buffer separately
+    pub fn set(&self, data: &[T]) {
+        self.ub.set_subset(&self.buf(data), self.offset as usize);
+    }
+
+    /// Used to create a buffer with the correct stride which can then be uploaded to the GPU in one go.
+    pub fn buf(&self, data: &[T]) -> Vec<u8> {
+        let mut buf = Vec::with_capacity(self.stride as usize * self.elems.len());
+        for (i, elem) in data.iter().enumerate() {
+            let slice = self.elems[i].buf(elem);
+            let slice_len = slice.len();
+            buf.extend(slice);
+            buf.resize(buf.len() + self.stride as usize - slice_len, 0);
+        }
+
+        buf
+    }
+}
+
+pub struct GPUAggregateArray<'a, T>
+    where
+        T: GPUVariant<'a>,
+        T::Variant: GPUAggregate<'a>
+{
+    ub: &'a UniformBlock,
+    pub elems: Vec<T::Variant>,
+}
+
+impl<'a, T> GPUAggregateArray<'a, T>
+    where
+        T: GPUVariant<'a>,
+        T::Variant: GPUAggregate<'a>
+{
+    fn from_name(program: &Program, name: &str, len: usize, ub: &'a UniformBlock) -> Self {
+        let mut elems = Vec::with_capacity(len);
+        for i in 0..len {
+            elems.push(T::Variant::from_name(program, &format!("{}[{}]", name, i), ub))
+        }
+
+        GPUAggregateArray {
+            ub,
+            elems,
+        }
+    }
+
+    fn set(&self, data: &[<<T as GPUVariant<'a>>::Variant as GPUAggregate<'a>>::Input]) {
+        for (i, elem) in data.iter().enumerate() {
+            self.elems[i].set(elem);
+        }
+    }
+}
+
+pub struct GPUTestStruct<'a> {
+    pub data: <vector_data::f32_f32_f32 as GPUVariant<'a>>::Variant,
+    pub other_data: <vector_data::f32_f32_f32 as GPUVariant<'a>>::Variant,
+}
+
+impl<'a> GPUAggregate<'a> for GPUTestStruct<'a> {
+    type Input = TestStruct;
+
+    fn from_name(program: &Program, name: &str, ub: &'a UniformBlock) -> Self {
+        GPUTestStruct {
+            data: <vector_data::f32_f32_f32 as GPUVariant<'a>>::Variant::from_name(program, &format!("{}{}", name, ".data"), ub),
+            other_data: <vector_data::f32_f32_f32 as GPUVariant<'a>>::Variant::from_name(program, &format!("{}{}", name, ".other_data"), ub)
+        }
+    }
+
     fn set(&self, data: &TestStruct) {
         self.data.set(&data.data);
         self.other_data.set(&data.other_data);
     }
+}
 
-    fn buf(&self, data: &TestStruct) -> &[u8] {
-        unimplemented!("Aggregate types don't exist as a buf")
+pub struct GPUShaderDefaultLayout<'a> {
+    pub mvp: <matrix_data::mat4 as GPUVariant<'a>>::Variant,
+    pub mv: <matrix_data::mat4 as GPUVariant<'a>>::Variant,
+    pub test_arr: GPUBasicArray<'a, vector_data::f32_f32_f32>,
+    pub test_struct: <TestStruct as GPUVariant<'a>>::Variant,
+    pub test_struct_arr: GPUAggregateArray<'a, TestStruct>
+}
+
+impl<'a> GPUAggregate<'a> for GPUShaderDefaultLayout<'a> {
+    type Input = ShaderDefaultLayout;
+
+    fn from_name(program: &Program, name: &str, ub: &'a UniformBlock) -> Self {
+        GPUShaderDefaultLayout {
+            mvp: <matrix_data::mat4 as GPUVariant<'a>>::Variant::from_name(program, &format!("{}{}", name, ".mvp"), ub),
+            mv: <matrix_data::mat4 as GPUVariant<'a>>::Variant::from_name(program, &format!("{}{}", name, ".mv"), ub),
+            test_arr: GPUBasicArray::<'a, vector_data::f32_f32_f32>::from_name(program, &format!("{}{}", name, ".test_arr"), 2, ub),
+            test_struct: <TestStruct as GPUVariant<'a>>::Variant::from_name(program, &format!("{}{}", name, ".test_struct"), ub),
+            test_struct_arr: GPUAggregateArray::<'a, TestStruct>::from_name(program, &format!("{}{}", name, ".test_struct_arr"), 3, ub)
+        }
     }
-}
 
-struct GPUShaderDefaultLayout<'a> {
-    pub mvp: GPUMatrix<'a, matrix_data::mat4>,
-    pub mv: GPUMatrix<'a, matrix_data::mat4>,
-    pub test_arr: GPUArray<'a, GPUBasic<'a, vector_data::f32_f32_f32>>,
-    pub test_struct: GPUTestStruct<'a>,
-    pub test_struct_arr: GPUArray<'a, GPUTestStruct<'a>>
-}
-
-impl GPUSettable for GPUShaderDefaultLayout {
     fn set(&self, data: &ShaderDefaultLayout) {
         self.mvp.set(&data.mvp);
         self.mv.set(&data.mv);
@@ -61,260 +360,4 @@ impl GPUSettable for GPUShaderDefaultLayout {
         self.test_struct.set(&data.test_struct);
         self.test_struct_arr.set(&data.test_struct_arr);
     }
-
-    fn buf(&self, data: &ShaderDefaultLayout) -> &[u8] {
-        unimplemented!("Aggregate types don't exist as a buf")
-    }
 }
-
-struct GPUArray<'a, S: GPUSettable> {
-    ub: &'a UniformBlock<ShaderDefaultLayout>,
-    pub elems: Vec<S>,
-    stride: gl::types::GLint,
-    offset: gl::types::GLint
-}
-
-impl<S: GPUSettable> GPUSettable for GPUArray<S> {
-    fn set<T>(&self, data: &Vec<T>) {
-        self.ub.set_subset(self.buf(data), self.offset as usize);
-    }
-
-    fn buf<T>(&self, data: &Vec<T>) -> &[u8] {
-        let mut buf = Vec::new();
-        for (i, elem) in data.iter().enumerate() {
-            buf.extend_from_slice(self.elems[i].buf(elem));
-        }
-
-        &buf
-    }
-}
-
-struct GPUMatrix<'a, M: AsColSlices> {
-    ub: &'a UniformBlock<ShaderDefaultLayout>,
-    offset: gl::types::GLint,
-    stride: gl::types::GLint,
-    _marker: PhantomData<M>
-}
-
-impl<M: AsColSlices> GPUSettable for GPUMatrix<M> {
-    fn set<M>(&self, data: &M) {
-        self.ub.set_subset(self.buf(data), self.offset as usize);
-    }
-
-    fn buf<M>(&self, data: &M) -> &[u8] {
-        let slices: &[&[u8]] = data.as_col_slices;
-        let mut buf: Vec<u8> = Vec::with_capacity(slices.len() * slices[0].len() + slices.len() & self.stride);
-        buf.extend_from_slice(slices[0]);
-
-        for i in 1..(slices.len() - 1) {
-            buf.resize(buf.len() + self.stride, 0);
-            buf.extend_from_slice(slices[i]);
-        }
-
-        &buf
-    }
-}
-
-struct GPUBasic<'a, T> {
-    ub: &'a UniformBlock<ShaderDefaultLayout>,
-    offset: gl::types::GLint,
-    _marker: PhantomData<T>
-}
-
-impl<T> GPUSettable for GPUBasic<T> {
-    fn set<T>(&self, data: &T) {
-        self.ub.set_subset(self.buf(), self.offset as usize);
-    }
-
-    fn buf<T>(&self, data: &T) -> &[u8] {
-        unsafe {
-            from_raw_parts(&data as *const u8, size_of::<T>())
-        }
-    }
-}
-
-// pub enum ShaderDefaultLayoutEnum {
-//     All(ShaderDefaultLayout),
-//     MVP(matrix_data::mat4),
-//     MV(matrix_data::mat4),
-//     TestArr(usize, vector_data::f32_f32_f32),
-//     TestStruct(TestStruct),
-// }
-//
-// impl LayoutEnum for ShaderDefaultLayoutEnum {}
-//
-// impl UniformLayoutShared for ShaderDefaultLayout {
-//     type LayoutElem = ShaderDefaultLayoutEnum;
-//     // const STRUCT_NAME: &'static CStr = c_str!("Defaults");
-//     // const NUM_FIELDS: usize = 2;
-//     // const FIELD_NAMES: [&'static CStr; Self::NUM_FIELDS] = [c_str!("mvp"), c_str!("mv")];
-//
-//     fn struct_name() -> CString {
-//         CString::new("Default").unwrap()
-//     }
-//
-//     fn field_names() -> Vec<CString> {
-//         Vec::from(&[
-//             CString::new("mvp").unwrap(),
-//             CString::new("mv").unwrap(),
-//             CString::new("test_arr").unwrap()
-//         ][..])
-//     }
-//         // CString::new("mvp").expect("Field name 'mvp' is not a valid CString"),
-//         // CString::new("mv").expect("Field name 'mv' is not a valid CString")
-//     // ];
-//
-//     fn get_field_types(program: &Program, indices: &[gl::types::GLuint]) -> Vec<FieldType> {
-//         let mut field_types: Vec<FieldType> = Vec::with_capacity(3);
-//         let mut stride = 0;
-//
-//         unsafe {
-//             gl::GetActiveUniformsiv(
-//                 program.get_id(),
-//                 1 as gl::types::GLsizei,
-//                 &indices[0] as *const gl::types::GLuint,
-//                 gl::UNIFORM_MATRIX_STRIDE,
-//                 &mut stride as *mut gl::types::GLint
-//             )
-//         }
-//         field_types.push(FieldType::Matrix(stride));
-//
-//         unsafe {
-//             gl::GetActiveUniformsiv(
-//                 program.get_id(),
-//                 1 as gl::types::GLsizei,
-//                 &indices[1] as *const gl::types::GLuint,
-//                 gl::UNIFORM_MATRIX_STRIDE,
-//                 &mut stride as *mut gl::types::GLint
-//             )
-//         }
-//         field_types.push(FieldType::Matrix(stride));
-//
-//         unsafe {
-//             gl::GetActiveUniformsiv(
-//                 program.get_id(),
-//                 1 as gl::types::GLsizei,
-//                 &indices[2] as *const gl::types::GLuint,
-//                 gl::UNIFORM_ARRAY_STRIDE,
-//                 &mut stride as *mut gl::types::GLint
-//             )
-//         }
-//         field_types.push(FieldType::Array(stride, FieldType::Primitive));
-//
-//         field_types
-//     }
-//
-//     fn match_elem(elem: &ShaderDefaultLayoutEnum) -> (usize, &[&[u8]]) {
-//         match elem {
-//             ShaderDefaultLayoutEnum::All(s) {
-//                 (
-//                     0,
-//                     s.data_slices()[0]
-//                 )
-//             },
-//             ShaderDefaultLayoutEnum::MVP(mat) => {
-//                 // self.mvp = mat;
-//                 let mvp_col1 = mat.columns(0, 1).as_slice();
-//                 let mvp_col2 = mat.columns(1, 1).as_slice();
-//                 let mvp_col3 = mat.columns(2, 1).as_slice();
-//                 let mvp_col4 = mat.columns(3, 1).as_slice();
-//                 (
-//                     0,
-//                     unsafe {
-//                         &[
-//                             from_raw_parts(mvp_col1.as_ptr() as *const u8, mvp_col1.len() * size_of::<f32>()),
-//                             from_raw_parts(mvp_col2.as_ptr() as *const u8, mvp_col2.len() * size_of::<f32>()),
-//                             from_raw_parts(mvp_col3.as_ptr() as *const u8, mvp_col3.len() * size_of::<f32>()),
-//                             from_raw_parts(mvp_col4.as_ptr() as *const u8, mvp_col4.len() * size_of::<f32>()),
-//                         ]
-//                     }
-//                 )
-//             },
-//             ShaderDefaultLayoutEnum::MV(mat) => {
-//                 // self.mv = mat;
-//                 let mv_col1 = mat.columns(0, 1).as_slice();
-//                 let mv_col2 = mat.columns(1, 1).as_slice();
-//                 let mv_col3 = mat.columns(2, 1).as_slice();
-//                 let mv_col4 = mat.columns(3, 1).as_slice();
-//
-//                 (
-//                     1,
-//                     unsafe {
-//                         &[
-//                             from_raw_parts(mv_col1.as_ptr() as *const u8, mv_col1.len() * size_of::<f32>()),
-//                             from_raw_parts(mv_col2.as_ptr() as *const u8, mv_col2.len() * size_of::<f32>()),
-//                             from_raw_parts(mv_col3.as_ptr() as *const u8, mv_col3.len() * size_of::<f32>()),
-//                             from_raw_parts(mv_col4.as_ptr() as *const u8, mv_col4.len() * size_of::<f32>()),
-//                         ]
-//                     }
-//                 )
-//             },
-//             ShaderDefaultLayoutEnum::TestArr(idx, vec) => {
-//                 let test_arr_slice = vec;
-//                 (
-//                     2,
-//                     unsafe {
-//                         &[
-//                             from_raw_parts(&test_arr_slice[0] as *const u8, size_of::<f32_f32_f32>()),
-//                             from_raw_parts(&test_arr_slice[1] as *const u8, size_of::<f32_f32_f32>())
-//                         ]
-//                         // from_raw_parts(test_arr_slice.as_ptr() as *const u8, test_arr_slice.len() * size_of::<f32_f32_f32>())
-//                     }
-//                 )
-//             },
-//             ShaderDefaultLayoutEnum::TestStruct(test_struct) => {
-//                 test_struct.data_slices()
-//             }
-//         }
-//     }
-//
-//     fn set_elem(&mut self, elem: ShaderDefaultLayoutEnum) {
-//         match elem {
-//             ShaderDefaultLayoutEnum::MVP(mat) => self.mvp = mat,
-//             ShaderDefaultLayoutEnum::MV(mat) => self.mv = mat,
-//             ShaderDefaultLayoutEnum::TestArr(arr) => self.test_arr = arr,
-//             ShaderDefaultLayoutEnum::TestStruct(test_struct) => self.test_struct = test_struct,
-//         }
-//     }
-//
-//     fn data_slices(&self) -> Vec<&[&[u8]]> {
-//         let num_fields = Self::field_names().len();
-//         let mut buf: Vec<&[&[u8]]> = Vec::with_capacity(num_fields);
-//         let mv_slice = self.mv.as_slice();
-//
-//         let mvp_col1 = self.mvp.columns(0, 1).as_slice();
-//         let mvp_col2 = self.mvp.columns(1, 1).as_slice();
-//         let mvp_col3 = self.mvp.columns(2, 1).as_slice();
-//         let mvp_col4 = self.mvp.columns(3, 1).as_slice();
-//         buf.push(unsafe {
-//             &[
-//                 from_raw_parts(mvp_col1.as_ptr() as *const u8, mvp_col1.len() * size_of::<f32>()),
-//                 from_raw_parts(mvp_col2.as_ptr() as *const u8, mvp_col2.len() * size_of::<f32>()),
-//                 from_raw_parts(mvp_col3.as_ptr() as *const u8, mvp_col3.len() * size_of::<f32>()),
-//                 from_raw_parts(mvp_col4.as_ptr() as *const u8, mvp_col4.len() * size_of::<f32>()),
-//             ]
-//         });
-//
-//         let mv_col1 = mat.columns(0, 1).as_slice();
-//         let mv_col2 = mat.columns(1, 1).as_slice();
-//         let mv_col3 = mat.columns(2, 1).as_slice();
-//         let mv_col4 = mat.columns(3, 1).as_slice();
-//         buf.push(unsafe {
-//             &[
-//                 from_raw_parts(mv_col1.as_ptr() as *const u8, mv_col1.len() * size_of::<f32>()),
-//                 from_raw_parts(mv_col2.as_ptr() as *const u8, mv_col2.len() * size_of::<f32>()),
-//                 from_raw_parts(mv_col3.as_ptr() as *const u8, mv_col3.len() * size_of::<f32>()),
-//                 from_raw_parts(mv_col4.as_ptr() as *const u8, mv_col4.len() * size_of::<f32>()),
-//             ]
-//         });
-//
-//         buf.push(unsafe{
-//             &[
-//                 from_raw_parts(&self.test_arr[0] as *const u8, size_of::<f32_f32_f32>()),
-//                 from_raw_parts(&self.test_arr[1] as *const u8, size_of::<f32_f32_f32>())
-//             ]
-//         });
-//
-//         buf
-//     }
-// }

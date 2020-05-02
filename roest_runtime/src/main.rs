@@ -4,11 +4,15 @@ mod core_systems;
 mod core_components;
 use legion::prelude::*;
 
-use gl_renderer::{Viewport, ColorBuffer, vertex};
+use gl_renderer::{Viewport, ColorBuffer, vertex, uniform_buffer::InterfaceBlock, uniform_buffer::UniformBlock, uniform_struct_shared::ShaderDefaultLayout, uniform_struct_shared::GPUAggregate};
 use core_systems::resource_manager::data_loaders::{IndexedMeshLoader};
 use crate::core_systems::resource_manager::Loader;
-use gl_renderer::data::matrix_data::{mat3};
+use gl_renderer::data::matrix_data::{mat3, mat4};
 use crate::core_systems::resource_manager::data_loaders::ProgramLoader;
+use gl_renderer::buffer::UniformBuffer;
+use gl_renderer::data::vector_data_zst::f32_f32_f32;
+use gl_renderer::uniform_struct_shared::TestStruct;
+use gl::ffi_error_callback;
 
 fn main() {
     if let Err(e) = run() {
@@ -36,6 +40,9 @@ fn run() -> Result<(), failure::Error> {
 
     unsafe {
         gl::Enable(gl::DEPTH_TEST);
+        gl::Enable(gl::DEBUG_OUTPUT);
+
+        gl::DebugMessageCallback(Some(gl::error_callback), std::ptr::null())
     }
 
     let mut viewport = Viewport::for_window(900, 700);
@@ -71,6 +78,33 @@ fn run() -> Result<(), failure::Error> {
     );
 
     let program = ProgramLoader::new().load("resources/shaders/basic").unwrap();
+    let uniform_buffer = UniformBlock::new(&program, "Defaults");
+    let interface_block = InterfaceBlock::<ShaderDefaultLayout>::new(&program, "Defaults", &uniform_buffer);
+
+    let tmp = ShaderDefaultLayout {
+        mvp: mat4::identity(),
+        mv: mat4::identity(),
+        test_arr: [(1., 1., 1.).into(), (1., 1., 1.).into()],
+        test_struct: TestStruct {
+            data: (0.9, 0.5, 0.5).into(),
+            other_data: (1., 1., 1.).into()
+        },
+        test_struct_arr: [
+        TestStruct {
+            data: (0.9, 0.5, 0.5).into(),
+            other_data: (1., 1., 1.).into()
+        },
+        TestStruct {
+            data: (0.9, 0.5, 0.5).into(),
+            other_data: (1., 1., 1.).into()
+        },
+        TestStruct {
+            data: (0.9, 0.5, 0.5).into(),
+            other_data: (1., 1., 1.).into()
+        },
+        ]
+    };
+    interface_block.uniform_struct.set(&tmp);
 
     let teapot_loader: IndexedMeshLoader<vertex::NormalVertex> = IndexedMeshLoader::new();
 
