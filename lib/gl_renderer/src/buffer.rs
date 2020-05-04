@@ -84,18 +84,18 @@ impl<B> Buffer<B> where B: BufferType {
         }
     }
 
-    pub fn static_draw_alloc(&self, size: usize) {
+    pub fn dynamic_draw_alloc(&self, size: usize) {
         unsafe {
             gl::BufferData(
                 B::BUFFER_TYPE,
                 size as gl::types::GLsizeiptr,
                 std::ptr::null() as *const gl::types::GLvoid,
-                gl::STATIC_DRAW
+                gl::DYNAMIC_DRAW
             );
         }
     }
 
-    pub unsafe fn static_draw_subdata<T>(&self, data: &[T], offset: gl::types::GLintptr) {
+    pub unsafe fn draw_subdata<T>(&self, data: &[T], offset: gl::types::GLintptr) {
         gl::BufferSubData(
             B::BUFFER_TYPE,
             offset,

@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use syn::spanned::Spanned;
 use quote::quote;
 
-pub fn genereate_gl_get_impl(ast: &syn::DeriveInput) -> TokenStream {
+pub fn generate_gl_get_impl(ast: &syn::DeriveInput) -> TokenStream {
     let ident = &ast.ident;
     let generics = &ast.generics;
     let where_clause = &ast.generics.where_clause;

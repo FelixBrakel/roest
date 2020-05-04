@@ -16,7 +16,8 @@ pub use shader::{Shader, Error as ShaderError};
 pub use program::{Program, Error as ProgramError, GlUniform};
 pub use indexed_vert_array::{IndexedVertArray};
 pub use color_buffer::ColorBuffer;
-pub use renderer_derive::{VertexAttribPointers, gl_getters, gl_setters};
+pub use renderer_derive::{VertexAttribPointers, gl_getters, gl_setters, GPUVariant};
+pub use uniform_struct_shared::{GPUVariant, GPUAggregate, GPUAggregateArray};
 
 use std::ffi::{CString};
 

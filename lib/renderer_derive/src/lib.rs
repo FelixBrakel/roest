@@ -5,27 +5,37 @@ extern crate proc_macro2;
 
 mod gl_setters;
 mod gl_getters;
+mod gpu_variant;
 
 use syn;
 use quote::quote;
 use proc_macro::{TokenStream};
 
-use gl_setters::genereate_gl_set_impl;
-use gl_getters::genereate_gl_get_impl;
+use gl_setters::generate_gl_set_impl;
+use gl_getters::generate_gl_get_impl;
+use gpu_variant::generate_gpu_variant_impl;
 
 #[proc_macro_derive(gl_setters, attributes(location))]
 pub fn gl_set_derive(input: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(input as syn::DeriveInput);
 
-    genereate_gl_set_impl(&ast)
+    generate_gl_set_impl(&ast)
 }
 
 #[proc_macro_derive(gl_getters, attributes(location))]
 pub fn gl_get_derive(input: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(input as syn::DeriveInput);
 
-    genereate_gl_get_impl(&ast)
+    generate_gl_get_impl(&ast)
 }
+
+#[proc_macro_derive(GPUVariant, attributes(name))]
+pub fn gpu_variant_derive(input: TokenStream) -> TokenStream {
+    let ast = syn::parse_macro_input!(input as syn::DeriveInput);
+
+    generate_gpu_variant_impl(&ast)
+}
+
 
 #[proc_macro_derive(VertexAttribPointers, attributes(location))]
 pub fn vertex_attrib_pointers_derive(input: TokenStream) -> TokenStream {

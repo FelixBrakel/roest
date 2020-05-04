@@ -78,15 +78,15 @@ fn run() -> Result<(), failure::Error> {
     );
 
     let program = ProgramLoader::new().load("resources/shaders/basic").unwrap();
-    let uniform_buffer = UniformBlock::new(&program, "Defaults");
-    let interface_block = InterfaceBlock::<ShaderDefaultLayout>::new(&program, "Defaults", &uniform_buffer);
+    // let uniform_buffer = UniformBlock::new(&program, "Defaults");
+    let interface_block = InterfaceBlock::<ShaderDefaultLayout>::new(&program, "Defaults");
 
     let tmp = ShaderDefaultLayout {
         mvp: mat4::identity(),
         mv: mat4::identity(),
         test_arr: [(1., 1., 1.).into(), (1., 1., 1.).into()],
         test_struct: TestStruct {
-            data: (0.9, 0.5, 0.5).into(),
+            data: (0.5, 0.5, 0.5).into(),
             other_data: (1., 1., 1.).into()
         },
         test_struct_arr: [
@@ -108,13 +108,14 @@ fn run() -> Result<(), failure::Error> {
 
     let teapot_loader: IndexedMeshLoader<vertex::NormalVertex> = IndexedMeshLoader::new();
 
-    let material = core_components::material::Flat::new((0.1, 0.1, 0.1, 1.0).into());
+    let material = core_components::material::Flat::new((0.2, 0.2, 0.3, 1.0).into());
 
     let color_buffer = ColorBuffer::from_color(na::Vector3::new(0.3, 0.3, 0.5));
     color_buffer.set_used();
 
     let renderer = core_systems::RendererSystem::system();
     world.resources.insert(program);
+    world.resources.insert(interface_block);
 
     world.insert(
         (),

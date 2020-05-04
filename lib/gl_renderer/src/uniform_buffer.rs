@@ -3,19 +3,23 @@ use crate::{Program};
 use std::ffi::CString;
 use crate::uniform_struct_shared::{GPUAggregate, GPUVariant};
 use std::os::raw::c_char;
+use std::sync::Arc;
 
-pub struct InterfaceBlock<'a, U: GPUVariant<'a>> {
+pub struct InterfaceBlock<U: GPUVariant> {
+    uniform_block: Arc<UniformBlock>,
     pub uniform_struct: U::Variant,
 }
 
-impl<'a, U: GPUVariant<'a>> InterfaceBlock<'a, U>
+impl<U: GPUVariant> InterfaceBlock<U>
     where
-        U: GPUVariant<'a>,
-        <U as GPUVariant<'a>>::Variant: GPUAggregate<'a>
+        U: GPUVariant,
+        <U as GPUVariant>::Variant: GPUAggregate
 {
-    pub fn new(program: &Program, name: &str, buffer: &'a UniformBlock) -> Self {
-        let uniform_struct = U::Variant::from_name(program, name, buffer);
+    pub fn new(program: &Program, name: &str,) -> Self {
+        let ub = Arc::new(UniformBlock::new(program, name));
+        let uniform_struct = U::Variant::from_name(program, name, ub.clone());
         InterfaceBlock {
+            uniform_block: ub,
             uniform_struct
         }
     }
@@ -40,7 +44,7 @@ impl UniformBlock {
         } as usize;
 
         ubo.bind();
-        ubo.static_draw_alloc(block_size);
+        ubo.dynamic_draw_alloc(block_size);
         ubo.unbind();
 
         unsafe {
@@ -150,7 +154,7 @@ impl UniformBlock {
     pub fn set_subset<T>(&self, data: &[T], offset: usize) {
         self.ubo.bind();
         unsafe {
-            self.ubo.static_draw_subdata(data, offset as gl::types::GLintptr);
+            self.ubo.draw_subdata(data, offset as gl::types::GLintptr);
         }
         self.ubo.unbind();
     }
