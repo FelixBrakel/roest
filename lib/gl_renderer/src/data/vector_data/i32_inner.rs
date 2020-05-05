@@ -1,11 +1,16 @@
 use serde::{Deserialize, Serialize};
-use crate::Program;
+use crate::{Program, GPUVariant, uniform_struct_shared::{GPUBasic, GPUBasicArray}};
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, Default)]
 #[repr(C, packed)]
 pub struct i32_ {
     pub d0: i32,
+}
+
+impl GPUVariant for i32_ {
+    type Variant = GPUBasic<i32_>;
+    type ArrayVariant = GPUBasicArray<i32_>;
 }
 
 impl i32_ {
@@ -52,7 +57,7 @@ impl From<i32> for i32_ {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, Default)]
 #[repr(C, packed)]
 pub struct i32_i32 {
     pub d0: i32,
@@ -105,7 +110,7 @@ impl From<(i32, i32)> for i32_i32 {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, Default)]
 #[repr(C, packed)]
 pub struct i32_i32_i32 {
     pub d0: i32,
@@ -160,7 +165,7 @@ impl From<(i32, i32, i32)> for i32_i32_i32 {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, Default)]
 #[repr(C, packed)]
 pub struct i32_i32_i32_i32 {
     pub d0: i32,

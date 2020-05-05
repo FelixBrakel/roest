@@ -1,39 +1,15 @@
-use crate::data::{matrix_data, vector_data};
-use crate::data::matrix_data::{AsColSlices, GlMat};
+use crate::data::matrix_data::{AsColSlices};
 use std::ffi::{CString};
 use std::mem::size_of;
 use std::slice::from_raw_parts;
-use c_str_macro::c_str;
 use crate::uniform_buffer::{UniformBlock};
 use crate::Program;
-use crate::data::vector_data::f32_f32_f32;
 use failure::_core::marker::PhantomData;
 use std::sync::Arc;
-use renderer_derive::GPUVariant;
-
-#[derive(GPUVariant)]
-pub struct TestStruct {
-    pub data: vector_data::f32_f32_f32,
-    pub other_data: vector_data::f32_f32_f32,
-}
-
-#[derive(GPUVariant)]
-pub struct ShaderDefaultLayout {
-    pub mvp: matrix_data::mat4,
-    pub mv: matrix_data::mat4,
-    pub test_arr: [vector_data::f32_f32_f32; 2],
-    pub test_struct: TestStruct,
-    pub test_struct_arr: [TestStruct; 3]
-}
 
 pub trait GPUVariant {
     type Variant;
     type ArrayVariant;
-}
-
-impl GPUVariant for vector_data::f32_f32_f32 {
-    type Variant = GPUBasic<vector_data::f32_f32_f32>;
-    type ArrayVariant = GPUBasicArray<vector_data::f32_f32_f32>;
 }
 
 impl<T: AsColSlices> GPUVariant for T {
@@ -49,7 +25,7 @@ pub struct GPUMatrix<M: AsColSlices> {
 }
 
 impl<M: AsColSlices> GPUMatrix<M> {
-    fn from_name(program: &Program, name: &str, ub: Arc<UniformBlock>) -> Self {
+    pub fn from_name(program: &Program, name: &str, ub: Arc<UniformBlock>) -> Self {
         let idx = unsafe {
             UniformBlock::get_elem_indices(program, &[CString::new(name).unwrap()])[0]
         };
@@ -70,7 +46,7 @@ impl<M: AsColSlices> GPUMatrix<M> {
         }
     }
 
-    fn from_params(offset: gl::types::GLint, stride: gl::types::GLint, ub: Arc<UniformBlock>) -> Self {
+    pub fn from_params(offset: gl::types::GLint, stride: gl::types::GLint, ub: Arc<UniformBlock>) -> Self {
         GPUMatrix {
             ub,
             offset,
@@ -106,7 +82,7 @@ pub struct GPUBasic<T> {
 }
 
 impl<T> GPUBasic<T> {
-    fn from_name(program: &Program, name: &str, ub: Arc<UniformBlock>) -> Self {
+    pub fn from_name(program: &Program, name: &str, ub: Arc<UniformBlock>) -> Self {
         let idx = unsafe {
             UniformBlock::get_elem_indices(program, &[CString::new(name).unwrap()])[0]
         };
@@ -122,7 +98,7 @@ impl<T> GPUBasic<T> {
         }
     }
 
-    fn from_params(offset: gl::types::GLint, ub: Arc<UniformBlock>) -> Self {
+    pub fn from_params(offset: gl::types::GLint, ub: Arc<UniformBlock>) -> Self {
         GPUBasic {
             ub,
             offset,
@@ -164,7 +140,7 @@ impl<T> GPUBasicArray<T>
     where T: GPUVariant<Variant = GPUBasic<T>>
 {
     /// constructs the array from the name of the variable on the GPU by querying all the parameters at runtime.
-    fn from_name(program: &Program, name: &str, len: usize, ub: Arc<UniformBlock>) -> Self {
+    pub fn from_name(program: &Program, name: &str, len: usize, ub: Arc<UniformBlock>) -> Self {
         let idx = unsafe {
             UniformBlock::get_elem_indices(program, &[CString::new(name).unwrap()])[0]
         };
@@ -227,7 +203,7 @@ impl<T> GPUMatrixArray<T>
     where T: GPUVariant<Variant = GPUMatrix<T>> + AsColSlices
 {
     /// constructs the array from the name of the variable on the GPU by querying all the parameters at runtime.
-    fn from_name(program: &Program, name: &str, len: usize, ub: Arc<UniformBlock>) -> Self {
+    pub fn from_name(program: &Program, name: &str, len: usize, ub: Arc<UniformBlock>) -> Self {
         let idx = unsafe {
             UniformBlock::get_elem_indices(program, &[CString::new(name).unwrap()])[0]
         };
@@ -282,7 +258,6 @@ pub struct GPUAggregateArray<T>
         T: GPUVariant,
         T::Variant: GPUAggregate
 {
-    ub: Arc<UniformBlock>,
     pub elems: Vec<T::Variant>,
 }
 
@@ -291,72 +266,20 @@ impl<T> GPUAggregateArray<T>
         T: GPUVariant,
         T::Variant: GPUAggregate
 {
-    fn from_name(program: &Program, name: &str, len: usize, ub: Arc<UniformBlock>) -> Self {
+    pub fn from_name(program: &Program, name: &str, len: usize, ub: Arc<UniformBlock>) -> Self {
         let mut elems = Vec::with_capacity(len);
         for i in 0..len {
             elems.push(T::Variant::from_name(program, &format!("{}[{}]", name, i), ub.clone()))
         }
 
         GPUAggregateArray {
-            ub,
             elems,
         }
     }
 
-    fn set(&self, data: &[<<T as GPUVariant>::Variant as GPUAggregate>::Input]) {
+    pub fn set(&self, data: &[<<T as GPUVariant>::Variant as GPUAggregate>::Input]) {
         for (i, elem) in data.iter().enumerate() {
             self.elems[i].set(elem);
         }
     }
 }
-
-// pub struct GPUTestStruct {
-//     pub data: <vector_data::f32_f32_f32 as GPUVariant>::Variant,
-//     pub other_data: <vector_data::f32_f32_f32 as GPUVariant>::Variant,
-// }
-//
-// impl GPUAggregate for GPUTestStruct {
-//     type Input = TestStruct;
-//
-//     fn from_name(program: &Program, name: &str, ub: Arc<UniformBlock>) -> Self {
-//         GPUTestStruct {
-//             data: <vector_data::f32_f32_f32 as GPUVariant>::Variant::from_name(program, &format!("{}{}", name, ".data"), ub.clone()),
-//             other_data: <vector_data::f32_f32_f32 as GPUVariant>::Variant::from_name(program, &format!("{}{}", name, ".other_data"), ub)
-//         }
-//     }
-//
-//     fn set(&self, data: &TestStruct) {
-//         self.data.set(&data.data);
-//         self.other_data.set(&data.other_data);
-//     }
-// }
-//
-// pub struct GPUShaderDefaultLayout {
-//     pub mvp: <matrix_data::mat4 as GPUVariant>::Variant,
-//     pub mv: <matrix_data::mat4 as GPUVariant>::Variant,
-//     pub test_arr: <vector_data::f32_f32_f32 as GPUVariant>::ArrayVariant,
-//     pub test_struct: <TestStruct as GPUVariant>::Variant,
-//     pub test_struct_arr: <TestStruct as GPUVariant>::ArrayVariant
-// }
-//
-// impl GPUAggregate for GPUShaderDefaultLayout {
-//     type Input = ShaderDefaultLayout;
-//
-//     fn from_name(program: &Program, name: &str, ub: Arc<UniformBlock>) -> Self {
-//         GPUShaderDefaultLayout {
-//             mvp: <matrix_data::mat4 as GPUVariant>::Variant::from_name(program, &format!("{}.{}", name, "mvp"), ub.clone()),
-//             mv: <matrix_data::mat4 as GPUVariant>::Variant::from_name(program, &format!("{}.{}", name, "mv"), ub.clone()),
-//             test_arr: <vector_data::f32_f32_f32 as GPUVariant>::ArrayVariant::from_name(program, &format!("{}.{}", name, "test_arr"), 2, ub.clone()),
-//             test_struct: <TestStruct as GPUVariant>::Variant::from_name(program, &format!("{}.{}", name, "test_struct"), ub.clone()),
-//             test_struct_arr: <TestStruct as GPUVariant>::ArrayVariant::from_name(program, &format!("{}.{}", name, "test_struct_arr"), 3, ub)
-//         }
-//     }
-//
-//     fn set(&self, data: &ShaderDefaultLayout) {
-//         self.mvp.set(&data.mvp);
-//         self.mv.set(&data.mv);
-//         self.test_arr.set(&data.test_arr);
-//         self.test_struct.set(&data.test_struct);
-//         self.test_struct_arr.set(&data.test_struct_arr);
-//     }
-// }

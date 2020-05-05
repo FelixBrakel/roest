@@ -1,23 +1,16 @@
 use nalgebra as na;
-use approx::assert_relative_eq;
-// use specs::{Component, VecStorage};
 
 #[derive(Copy, Clone)]
 pub struct Transform {
     scale: f32,
     location: na::Vector3<f32>,
     rotation: na::UnitQuaternion<f32>,
-    other_rotation: na::Rotation3<f32>,
-    // model: na::Matrix4<f32>
 }
 
-// impl Component for Transform {
-//     type Storage = VecStorage<Self>;
-// }
 #[allow(dead_code)]
 impl Transform {
-    pub fn new(scale: f32, location: na::Vector3<f32>, rotation: na::UnitQuaternion<f32>, other_rotation: na::Rotation3<f32>) -> Self {
-        Transform { scale, location, rotation, other_rotation}
+    pub fn new(scale: f32, location: na::Vector3<f32>, rotation: na::UnitQuaternion<f32>) -> Self {
+        Transform { scale, location, rotation}
     }
 
     pub fn from_defaults() -> Self {
@@ -25,7 +18,6 @@ impl Transform {
             1.,
             na::Vector3::new(0., 0., 0.),
             na::UnitQuaternion::from_euler_angles(0., 0., 0.),
-            na::Rotation3::from_euler_angles(0., 0., 0.)
         )
     }
 

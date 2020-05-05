@@ -1,12 +1,12 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::Type;
+use syn::{Type, Ident, Generics};
 use proc_macro_crate::crate_name;
+use proc_macro2::Span;
 
 pub fn generate_gpu_variant_impl(ast: &syn::DeriveInput) -> TokenStream {
     let ident = &ast.ident;
     let generics = &ast.generics;
-    let where_clause = &ast.generics.where_clause;
     let name = std::env::var("CARGO_PKG_NAME").unwrap();
 
     let gl_path = if name == "gl_renderer" {
@@ -14,15 +14,17 @@ pub fn generate_gpu_variant_impl(ast: &syn::DeriveInput) -> TokenStream {
             crate
         }
     } else {
-        let name = crate_name("gl_renderer").expect("gl_renderer has not been defined in Cargo.toml");
+        let name = crate_name("gl_renderer")
+            .expect("gl_renderer has not been defined in Cargo.toml");
+        let crate_ident = Ident::new(&name, Span::call_site());
         quote! {
-            #name
+            #crate_ident
         }
     };
 
-    let proxy_struct = generate_gpu_proxy_struct(ident, &ast.data, &gl_path);
+    let proxy_struct = generate_gpu_proxy_struct(ident, &ast.data, &gl_path, generics);
 
-    let proxy_struct_impl = generate_gpu_proxy_struct_impl(ident, &ast.data, &gl_path);
+    let proxy_struct_impl = generate_gpu_proxy_struct_impl(ident, &ast.data, &gl_path, generics);
 
     let gen = quote! {
         #proxy_struct
@@ -33,12 +35,13 @@ pub fn generate_gpu_variant_impl(ast: &syn::DeriveInput) -> TokenStream {
     gen.into()
 }
 
-fn generate_gpu_proxy_struct_impl(name: &syn::Ident, data: &syn::Data, gl_path: &proc_macro2::TokenStream) -> proc_macro2::TokenStream {
+fn generate_gpu_proxy_struct_impl(name: &syn::Ident, data: &syn::Data, gl_path: &proc_macro2::TokenStream, generics: &Generics) -> proc_macro2::TokenStream {
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
     let (set_calls, construct_calls) = generate_gpu_proxy_struct_calls(data, gl_path);
     let struct_name = syn::Ident::new(&format!("GPU{}", name), name.span());
     quote! {
-        impl #gl_path::GPUAggregate for #struct_name {
-            type Input = #name;
+        impl #impl_generics #gl_path::GPUAggregate for #struct_name #ty_generics #where_clause {
+            type Input = #name #ty_generics #where_clause;
 
             fn from_name(program: &#gl_path::Program, name: &str, ub: std::sync::Arc<#gl_path::uniform_buffer::UniformBlock>) -> Self {
                 #struct_name {
@@ -51,7 +54,7 @@ fn generate_gpu_proxy_struct_impl(name: &syn::Ident, data: &syn::Data, gl_path: 
             }
         }
 
-        impl #gl_path::GPUVariant for #name {
+        impl #impl_generics #gl_path::GPUVariant for #name #ty_generics #where_clause {
             type Variant = #struct_name;
             type ArrayVariant = #gl_path::GPUAggregateArray<#name>;
         }
@@ -125,13 +128,14 @@ fn generate_gpu_proxy_construct_call(field: &syn::Field, gl_path: &proc_macro2::
 }
 
 
-fn generate_gpu_proxy_struct(ident: &syn::Ident, data: &syn::Data, gl_path: &proc_macro2::TokenStream) -> proc_macro2::TokenStream {
+fn generate_gpu_proxy_struct(ident: &syn::Ident, data: &syn::Data, gl_path: &proc_macro2::TokenStream, generics: &Generics) -> proc_macro2::TokenStream {
+    let (_, ty_generics, where_clause) = generics.split_for_impl();
     let struct_name = syn::Ident::new(&format!("GPU{}", ident), ident.span());
 
     let fields = generate_gpu_proxy_struct_fields(data, gl_path);
 
     quote! {
-        pub struct #struct_name {
+        pub struct #struct_name #ty_generics #where_clause {
             #(#fields)*
         }
     }

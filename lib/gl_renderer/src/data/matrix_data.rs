@@ -5,7 +5,7 @@ use nalgebra as na;
 
 pub trait GlMat {
     unsafe fn gl_uniform(&self, location: usize);
-    /// Can return nonsensical data if the uniform at the corresponding location has not yet been set
+    /// Can return nonsensical data if the light at the corresponding location has not yet been set
     /// before calling this function
     unsafe fn from_gl_uniform(program: &Program, location: usize) -> Self;
 }

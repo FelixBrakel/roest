@@ -4,15 +4,81 @@ mod core_systems;
 mod core_components;
 use legion::prelude::*;
 
-use gl_renderer::{Viewport, ColorBuffer, vertex, uniform_buffer::InterfaceBlock, uniform_buffer::UniformBlock, uniform_struct_shared::ShaderDefaultLayout, uniform_struct_shared::GPUAggregate};
+use gl_renderer::{
+    Viewport,
+    ColorBuffer,
+    vertex,
+    GPUVariant,
+    data::matrix_data::{mat3},
+    data::vector_data,
+    light::*,
+    uniform_buffer::InterfaceBlock
+};
 use core_systems::resource_manager::data_loaders::{IndexedMeshLoader};
 use crate::core_systems::resource_manager::Loader;
-use gl_renderer::data::matrix_data::{mat3, mat4};
 use crate::core_systems::resource_manager::data_loaders::ProgramLoader;
-use gl_renderer::buffer::UniformBuffer;
-use gl_renderer::data::vector_data_zst::f32_f32_f32;
-use gl_renderer::uniform_struct_shared::TestStruct;
-use gl::ffi_error_callback;
+use crate::core_components::Transform;
+
+#[derive(GPUVariant, Default)]
+pub struct Lights {
+    directional: DirectionalLight,
+    point_lights: [PointLight; 16],
+    spot_lights: [SpotLight; 16],
+
+    num_point_lights: vector_data::i32_,
+    num_spot_lights: vector_data::i32_
+}
+
+pub enum LightsError {
+    MaxPointLightsReached,
+    PointLightIdxOutOfBounds,
+    MaxSpotLightsReached,
+    SpotLightIdxOutOfBounds,
+}
+
+impl Lights {
+    pub fn add_point_light(&mut self, light: PointLight) -> Result<(), LightsError> {
+        if self.num_point_lights.d0 > 16 {
+            return Err(LightsError::MaxPointLightsReached);
+        }
+
+        self.point_lights[self.num_point_lights.d0 as usize] = light;
+        self.num_point_lights.d0 += 1;
+
+        Ok(())
+    }
+
+    pub fn set_point_light(&mut self, idx: usize, light: PointLight) -> Result<(), LightsError> {
+        if idx >= self.num_point_lights.d0 as usize {
+            return Err(LightsError::PointLightIdxOutOfBounds);
+        }
+
+        self.point_lights[idx] = light;
+
+        Ok(())
+    }
+
+    pub fn add_spot_light(&mut self, light: SpotLight) -> Result<(), LightsError> {
+        if self.num_spot_lights.d0 > 16 {
+            return Err(LightsError::MaxSpotLightsReached);
+        }
+
+        self.spot_lights[self.num_spot_lights.d0 as usize] = light;
+        self.num_spot_lights.d0 += 1;
+
+        Ok(())
+    }
+
+    pub fn set_spot_light(&mut self, idx: usize, light: SpotLight) -> Result<(), LightsError> {
+        if idx >= self.num_spot_lights.d0 as usize {
+            return Err(LightsError::SpotLightIdxOutOfBounds);
+        }
+
+        self.spot_lights[idx] = light;
+
+        Ok(())
+    }
+}
 
 fn main() {
     if let Err(e) = run() {
@@ -60,7 +126,6 @@ fn run() -> Result<(), failure::Error> {
         1.,
         na::Vector3::new(0., 0., -2.),
         na::UnitQuaternion::from_euler_angles(0., 0., 0.),
-        na::Rotation3::from_euler_angles(0., 0., 0.)
     );
 
     let cam_rot = mat3::new(
@@ -78,33 +143,7 @@ fn run() -> Result<(), failure::Error> {
     );
 
     let program = ProgramLoader::new().load("resources/shaders/basic").unwrap();
-    // let uniform_buffer = UniformBlock::new(&program, "Defaults");
-    let interface_block = InterfaceBlock::<ShaderDefaultLayout>::new(&program, "Defaults");
-
-    let tmp = ShaderDefaultLayout {
-        mvp: mat4::identity(),
-        mv: mat4::identity(),
-        test_arr: [(1., 1., 1.).into(), (1., 1., 1.).into()],
-        test_struct: TestStruct {
-            data: (0.5, 0.5, 0.5).into(),
-            other_data: (1., 1., 1.).into()
-        },
-        test_struct_arr: [
-        TestStruct {
-            data: (0.9, 0.5, 0.5).into(),
-            other_data: (1., 1., 1.).into()
-        },
-        TestStruct {
-            data: (0.9, 0.5, 0.5).into(),
-            other_data: (1., 1., 1.).into()
-        },
-        TestStruct {
-            data: (0.9, 0.5, 0.5).into(),
-            other_data: (1., 1., 1.).into()
-        },
-        ]
-    };
-    interface_block.uniform_struct.set(&tmp);
+    let interface_block = InterfaceBlock::<Lights>::new(&program, "Lights");
 
     let teapot_loader: IndexedMeshLoader<vertex::NormalVertex> = IndexedMeshLoader::new();
 
@@ -129,6 +168,24 @@ fn run() -> Result<(), failure::Error> {
 
     world.insert(
         (),
+        (0..2).map(
+            |i| (
+                Transform::new(1., na::Vector3::new(i as f32, i as f32, i as f32), na::UnitQuaternion::from_euler_angles(0., 0., 0.)),
+                PointLight {
+                    position: (0., 0., 0.).into(),
+                    constant: (1.).into(),
+                    linear: (0.7).into(),
+                    quadratic: (1.8).into(),
+                    ambient: (0.1, 0.1, 0.1).into(),
+                    diffuse: (0.1, 0.1, 0.1).into(),
+                    specular: (0.1, 0.1, 0.1).into()
+                }
+                )
+        )
+    );
+
+    world.insert(
+        (),
         (0..1).map(|_| (camera,))
     );
 
@@ -143,7 +200,7 @@ fn run() -> Result<(), failure::Error> {
                     ..
                 } => {
                     viewport.update_size(w, h);
-                    let mut cam_query = <(Write<core_components::Camera>,)>::query();
+                    let cam_query = <(Write<core_components::Camera>,)>::query();
 
                     for (mut camera,) in cam_query.iter(&mut world) {
                         camera.update_perspective(
@@ -159,7 +216,7 @@ fn run() -> Result<(), failure::Error> {
                 _ => {},
             }
         }
-        let mut query = <(Write<core_components::Transform>, Read<core_components::IndexedMesh>)>::query();
+        let query = <(Write<core_components::Transform>, Read<core_components::IndexedMesh>)>::query();
 
         for (mut transform, _) in query.iter(&mut world) {
             transform.rotate(0., 0.01, 0.);

@@ -6,7 +6,7 @@ use std::os::raw::c_char;
 use std::sync::Arc;
 
 pub struct InterfaceBlock<U: GPUVariant> {
-    uniform_block: Arc<UniformBlock>,
+    // uniform_block: Arc<UniformBlock>,
     pub uniform_struct: U::Variant,
 }
 
@@ -19,7 +19,7 @@ impl<U: GPUVariant> InterfaceBlock<U>
         let ub = Arc::new(UniformBlock::new(program, name));
         let uniform_struct = U::Variant::from_name(program, name, ub.clone());
         InterfaceBlock {
-            uniform_block: ub,
+            // uniform_block: ub,
             uniform_struct
         }
     }
@@ -27,8 +27,6 @@ impl<U: GPUVariant> InterfaceBlock<U>
 
 pub struct UniformBlock {
     ubo: UniformBuffer,
-    block_index: gl::types::GLuint,
-    size: usize,
 }
 
 impl UniformBlock {
@@ -55,8 +53,6 @@ impl UniformBlock {
 
         UniformBlock {
             ubo,
-            block_index,
-            size: block_size,
         }
     }
 

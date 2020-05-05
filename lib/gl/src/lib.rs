@@ -3,25 +3,24 @@ mod bindings {
 }
 
 pub use bindings::*;
-use crate::bindings::types::GLsizei;
-use std::ffi::{CString, CStr};
+use std::ffi::{CStr};
 
-pub type ffi_error_callback = extern "system" fn(source: types::GLenum,
-                                                    ty: types::GLenum,
-                                                    id: types::GLuint,
-                                                    severity: types::GLenum,
-                                                    length: types::GLsizei,
-                                                    message: *const types::GLchar,
-                                                    user_param: *mut std::ffi::c_void);
+pub type FFIErrorCallback = extern "system" fn(source: types::GLenum,
+                                               ty: types::GLenum,
+                                               id: types::GLuint,
+                                               severity: types::GLenum,
+                                               length: types::GLsizei,
+                                               message: *const types::GLchar,
+                                               user_param: *mut std::ffi::c_void);
 
 pub extern "system" fn error_callback(
     source: types::GLenum,
     ty: types::GLenum,
     id: types::GLuint,
     severity: types::GLenum,
-    length: types::GLsizei,
+    _length: types::GLsizei,
     message: *const types::GLchar,
-    user_param: *mut std::ffi::c_void)
+    _user_param: *mut std::ffi::c_void)
 {
     let error_str = unsafe {
         CStr::from_ptr(message)

@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
-use crate::Program;
+use crate::{Program, GPUVariant, uniform_struct_shared::GPUBasic, uniform_struct_shared::GPUBasicArray};
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, Default)]
 #[repr(C, packed)]
 pub struct f32_ {
     pub d0: f32,
@@ -46,6 +46,11 @@ impl f32_ {
     }
 }
 
+impl GPUVariant for f32_ {
+    type Variant = GPUBasic<f32_>;
+    type ArrayVariant = GPUBasicArray<f32_>;
+}
+
 impl From<f32> for f32_ {
     fn from(other: f32) -> Self {
         f32_::new(other)
@@ -53,7 +58,7 @@ impl From<f32> for f32_ {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, Default)]
 #[repr(C, packed)]
 pub struct f32_f32 {
     pub d0: f32,
@@ -100,6 +105,11 @@ impl f32_f32 {
     }
 }
 
+impl GPUVariant for f32_f32 {
+    type Variant = GPUBasic<f32_f32>;
+    type ArrayVariant = GPUBasicArray<f32_f32>;
+}
+
 impl From<(f32, f32)> for f32_f32 {
     fn from(other: (f32, f32)) -> Self {
         f32_f32::new(other.0, other.1)
@@ -107,7 +117,7 @@ impl From<(f32, f32)> for f32_f32 {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, Default)]
 #[repr(C, packed)]
 pub struct f32_f32_f32 {
     pub d0: f32,
@@ -156,6 +166,11 @@ impl f32_f32_f32 {
     }
 }
 
+impl GPUVariant for f32_f32_f32 {
+    type Variant = GPUBasic<f32_f32_f32>;
+    type ArrayVariant = GPUBasicArray<f32_f32_f32>;
+}
+
 impl From<(f32, f32, f32)> for f32_f32_f32 {
     fn from(other: (f32, f32, f32)) -> Self {
         f32_f32_f32::new(other.0, other.1, other.2)
@@ -163,7 +178,7 @@ impl From<(f32, f32, f32)> for f32_f32_f32 {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, Default)]
 #[repr(C, packed)]
 pub struct f32_f32_f32_f32 {
     pub d0: f32,
@@ -212,6 +227,11 @@ impl f32_f32_f32_f32 {
 
         return (buf[0], buf[1], buf[2], buf[3]).into()
     }
+}
+
+impl GPUVariant for f32_f32_f32_f32 {
+    type Variant = GPUBasic<f32_f32_f32_f32>;
+    type ArrayVariant = GPUBasicArray<f32_f32_f32_f32>;
 }
 
 impl From<(f32, f32, f32, f32)> for f32_f32_f32_f32 {

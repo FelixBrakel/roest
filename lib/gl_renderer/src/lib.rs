@@ -1,15 +1,15 @@
 pub mod data;
 pub mod buffer;
 pub mod vertex;
-// pub mod mesh;
+pub mod uniform_struct_shared;
+pub mod uniform_buffer;
+pub mod light;
 
 mod viewport;
 mod shader;
 mod program;
 mod indexed_vert_array;
 mod color_buffer;
-pub mod uniform_struct_shared;
-pub mod uniform_buffer;
 
 pub use viewport::Viewport;
 pub use shader::{Shader, Error as ShaderError};
