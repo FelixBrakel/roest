@@ -15,8 +15,8 @@ impl<U: GPUVariant> InterfaceBlock<U>
         U: GPUVariant,
         <U as GPUVariant>::Variant: GPUAggregate
 {
-    pub fn new(program: &Program, name: &str,) -> Self {
-        let ub = Arc::new(UniformBlock::new(program, name));
+    pub fn new(program: &Program, name: &str, binding_point: u32) -> Self {
+        let ub = Arc::new(UniformBlock::new(program, name, binding_point));
         let uniform_struct = U::Variant::from_name(program, name, ub.clone());
         InterfaceBlock {
             // uniform_block: ub,
@@ -31,7 +31,7 @@ pub struct UniformBlock {
 
 impl UniformBlock {
     //TODO: make this method absolutely safe by checking if the program is safe at runtime.
-    pub fn new(program: &Program, name: &str) -> Self {
+    pub fn new(program: &Program, name: &str, binding_point: u32) -> Self {
         let ubo = UniformBuffer::new();
         let block_index = unsafe {
             Self::get_block_index(program, name)
@@ -46,10 +46,10 @@ impl UniformBlock {
         ubo.unbind();
 
         unsafe {
-            gl::UniformBlockBinding(program.get_id(), block_index, 1);
+            gl::UniformBlockBinding(program.get_id(), block_index, binding_point);
         }
 
-        ubo.bind_base(1);
+        ubo.bind_base(binding_point);
 
         UniformBlock {
             ubo,

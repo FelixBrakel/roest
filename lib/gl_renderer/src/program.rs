@@ -20,14 +20,6 @@ pub trait GlUniform {
 }
 
 impl Program {
-    pub fn set_defaults<D: GlUniform>(&self, defaults: &D) {
-        defaults.gl_uniform();
-    }
-
-    pub fn set_material<M: GlUniform>(&self, material: &M) {
-        material.gl_uniform();
-    }
-
     pub fn from_shaders(shaders: &[Shader]) -> Result<Self, Error> {
         let id = Self::load_shaders(shaders).unwrap();
         Ok(Program { id })

@@ -9,7 +9,7 @@ use gl_renderer::{
     ColorBuffer,
     vertex,
     GPUVariant,
-    data::matrix_data::{mat3},
+    data::matrix_data::{mat3, mat4},
     data::vector_data,
     light::*,
     uniform_buffer::InterfaceBlock
@@ -27,6 +27,22 @@ pub struct Lights {
 
     num_point_lights: vector_data::i32_,
     num_spot_lights: vector_data::i32_
+}
+
+#[derive(GPUVariant)]
+pub struct Matrices {
+    mvp: mat4,
+    mv: mat4,
+    m: mat4,
+    v: mat4,
+    p: mat4,
+    n: mat3
+}
+
+impl Matrices {
+    pub fn new(mvp: mat4, mv: mat4, m: mat4, v: mat4, p: mat4, n: mat3) -> Self {
+        Matrices { mvp, mv, m, v, p, n }
+    }
 }
 
 pub enum LightsError {
@@ -116,12 +132,6 @@ fn run() -> Result<(), failure::Error> {
     let universe = Universe::new();
     let mut world = universe.create_world();
 
-    // world.register::<core_components::Transform>();
-    // world.register::<core_components::Camera>();
-    // world.register::<core_components::renderable::IMeshRenderer>();
-    // world.register::<core_components::IndexedMesh>();
-    // world.register::<core_components::material::Flat>();
-
     let transform = core_components::Transform::new(
         1.,
         na::Vector3::new(0., 0., -2.),
@@ -143,25 +153,34 @@ fn run() -> Result<(), failure::Error> {
     );
 
     let program = ProgramLoader::new().load("resources/shaders/basic").unwrap();
-    let interface_block = InterfaceBlock::<Lights>::new(&program, "Lights");
+    let lights_block = InterfaceBlock::<Lights>::new(&program, "Lights", 1);
+    let matrices_block = InterfaceBlock::<Matrices>::new(&program, "Matrices", 2);
 
     let teapot_loader: IndexedMeshLoader<vertex::NormalVertex> = IndexedMeshLoader::new();
 
-    let material = core_components::material::Flat::new((0.2, 0.2, 0.3, 1.0).into());
+    let jade_material = core_components::material::Basic::new(
+        (0.135, 0.2225, 0.1575).into(),
+        (0.54, 0.89, 0.63).into(),
+        (0.316228, 0.316228, 0.316228).into(),
+        (0.1).into()
+    );
+    let material_block = InterfaceBlock::<core_components::material::Basic>::new(&program, "Material", 3);
 
     let color_buffer = ColorBuffer::from_color(na::Vector3::new(0.3, 0.3, 0.5));
     color_buffer.set_used();
 
     let renderer = core_systems::RendererSystem::system();
     world.resources.insert(program);
-    world.resources.insert(interface_block);
+    world.resources.insert(lights_block);
+    world.resources.insert(matrices_block);
+    world.resources.insert(material_block);
 
     world.insert(
         (),
         (0..1).map(
             |_| (
                 transform,
-                material,
+                jade_material,
                 teapot_loader.load("resources/meshes/triangle.mesh").unwrap())
         )
     );
@@ -170,15 +189,15 @@ fn run() -> Result<(), failure::Error> {
         (),
         (0..2).map(
             |i| (
-                Transform::new(1., na::Vector3::new(i as f32, i as f32, i as f32), na::UnitQuaternion::from_euler_angles(0., 0., 0.)),
+                Transform::new(1., na::Vector3::new((-1.0_f32).powf(i as f32) * 1., 0., -0.5), na::UnitQuaternion::from_euler_angles(0., 0., 0.)),
                 PointLight {
                     position: (0., 0., 0.).into(),
                     constant: (1.).into(),
-                    linear: (0.7).into(),
-                    quadratic: (1.8).into(),
-                    ambient: (0.1, 0.1, 0.1).into(),
-                    diffuse: (0.1, 0.1, 0.1).into(),
-                    specular: (0.1, 0.1, 0.1).into()
+                    linear: (0.22).into(),
+                    quadratic: (0.20).into(),
+                    ambient: (0.2, 0.2, 0.2).into(),
+                    diffuse: (0.5, 0.5, 0.5).into(),
+                    specular: (1.0, 1.0, 1.0).into()
                 }
                 )
         )

@@ -1,3 +1,3 @@
-mod flat;
+mod basic;
 
-pub use flat::Material as Flat;
+pub use basic::Material as Basic;
