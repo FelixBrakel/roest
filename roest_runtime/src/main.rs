@@ -162,8 +162,24 @@ fn run() -> Result<(), failure::Error> {
         (0.135, 0.2225, 0.1575).into(),
         (0.54, 0.89, 0.63).into(),
         (0.316228, 0.316228, 0.316228).into(),
-        (0.1).into()
+        (0.1 * 128.).into()
     );
+
+    let pearl_material = core_components::material::Basic::new(
+        (0.25, 0.20725, 0.20725).into(),
+        (1., 0.829, 0.829).into(),
+        (0.296648, 0.296648, 0.296648).into(),
+        (0.088 *  128.).into()
+    );
+
+    let turquoise_material = core_components::material::Basic::new(
+        (0.1, 0.18725, 0.1745).into(),
+        (0.396, 0.74151, 0.69102).into(),
+        (0.297254, 0.30829, 0.306678).into(),
+        (0.1 *  128.).into()
+    );
+
+
     let material_block = InterfaceBlock::<core_components::material::Basic>::new(&program, "Material", 3);
 
     let color_buffer = ColorBuffer::from_color(na::Vector3::new(0.3, 0.3, 0.5));
@@ -180,21 +196,21 @@ fn run() -> Result<(), failure::Error> {
         (0..1).map(
             |_| (
                 transform,
-                jade_material,
+                pearl_material,
                 teapot_loader.load("resources/meshes/triangle.mesh").unwrap())
         )
     );
 
     world.insert(
         (),
-        (0..2).map(
+        (0..1).map(
             |i| (
-                Transform::new(1., na::Vector3::new((-1.0_f32).powf(i as f32) * 1., 0., -0.5), na::UnitQuaternion::from_euler_angles(0., 0., 0.)),
+                Transform::new(1., na::Vector3::new(-1., 0., -1.2), na::UnitQuaternion::from_euler_angles(0., 0., 0.)),
                 PointLight {
                     position: (0., 0., 0.).into(),
                     constant: (1.).into(),
-                    linear: (0.22).into(),
-                    quadratic: (0.20).into(),
+                    linear: (0.35).into(),
+                    quadratic: (0.44).into(),
                     ambient: (0.2, 0.2, 0.2).into(),
                     diffuse: (0.5, 0.5, 0.5).into(),
                     specular: (1.0, 1.0, 1.0).into()
@@ -202,6 +218,42 @@ fn run() -> Result<(), failure::Error> {
                 )
         )
     );
+
+    world.insert(
+        (),
+        (0..1).map(
+            |i| (
+                Transform::new(1., na::Vector3::new(1., 0., -1.2), na::UnitQuaternion::from_euler_angles(0., 0., 0.)),
+                PointLight {
+                    position: (0., 0., 0.).into(),
+                    constant: (1.).into(),
+                    linear: (0.35).into(),
+                    quadratic: (0.44).into(),
+                    ambient: (0.25, 0.175, 0.175).into(),
+                    diffuse: (0.6, 0.45, 0.45).into(),
+                    specular: (1.0, 1.0, 1.0).into()
+                }
+            )
+        )
+    );
+
+    // world.insert(
+    //     (),
+    //     (0..1).map(
+    //         |_| (
+    //             Transform::new(1., na::Vector3::new(0.5, 0., 0.), na::UnitQuaternion::from_euler_angles(0., 0., 0.)),
+    //             PointLight {
+    //                 position: (0., 0., 0.).into(),
+    //                 constant: (1.).into(),
+    //                 linear: (0.7).into(),
+    //                 quadratic: (1.8).into(),
+    //                 ambient: (0.2, 0.2, 0.2).into(),
+    //                 diffuse: (0.5, 0.5, 0.5).into(),
+    //                 specular: (1.0, 1.0, 1.0).into()
+    //             }
+    //         )
+    //     )
+    // );
 
     world.insert(
         (),

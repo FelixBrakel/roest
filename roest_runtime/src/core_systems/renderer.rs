@@ -24,7 +24,7 @@ impl RendererSystem {
             .read_resource::<InterfaceBlock<material::Basic>>()
             .with_query(<(Read<Camera>,)>::query())
             .with_query(<(Read<Transform>, Read<material::Basic>, Read<IndexedMesh>)>::query())
-            .with_query(<(Read<Transform>, Write<PointLight>)>::query())
+            .with_query(<(Read<Transform>, Read<PointLight>)>::query())
             .build_thread_local( move |_, world, resource, (cam_query, mesh_query, light_query)| {
                 let (program, gpu_lights, gpu_matrices, gpu_material) = resource;
 
@@ -35,20 +35,21 @@ impl RendererSystem {
 
 
                     let mut lights = Lights::default();
-                    for (transform, mut point_light) in light_query.iter(&mut *world) {
+                    for (transform, point_light) in light_query.iter(&mut *world) {
+                        let mut light = (*point_light).clone();
                         let pos_vec = na::Vector4::new(
-                            point_light.position.d0,
-                            point_light.position.d1,
-                            point_light.position.d2,
+                            light.position.d0,
+                            light.position.d1,
+                            light.position.d2,
                             1.
                         );
                         let new_pos_vec = camera.view * transform.model() * pos_vec;
 
-                        point_light.position.d0 = new_pos_vec[0];
-                        point_light.position.d1 = new_pos_vec[1];
-                        point_light.position.d2 = new_pos_vec[2];
+                        light.position.d0 = new_pos_vec[0];
+                        light.position.d1 = new_pos_vec[1];
+                        light.position.d2 = new_pos_vec[2];
 
-                        lights.add_point_light(*point_light);
+                        lights.add_point_light(light);
                     }
 
                     gpu_lights.uniform_struct.set(&lights);
