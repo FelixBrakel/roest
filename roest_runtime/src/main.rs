@@ -18,7 +18,7 @@ use core_systems::resource_manager::data_loaders::{IndexedMeshLoader, ImageLoade
 use crate::core_systems::resource_manager::Loader;
 use crate::core_systems::resource_manager::data_loaders::ProgramLoader;
 use crate::core_components::Transform;
-use gl_renderer::texture::{Texture, Texture2D, TexWrapMode, TexMinFilterMode, TexMagFilterMode};
+use gl_renderer::texture::{Texture, Texture2D, TexWrapMode, TexMinFilterMode, TexMagFilterMode, NonResidentBindlessTexture};
 use image::GenericImageView;
 
 #[derive(GPUVariant, Default)]
@@ -158,7 +158,7 @@ fn run() -> Result<(), failure::Error> {
     let lights_block = InterfaceBlock::<Lights>::new(&program, "Lights", 1);
     let matrices_block = InterfaceBlock::<Matrices>::new(&program, "Matrices", 2);
 
-    let teapot_loader: IndexedMeshLoader<vertex::NormalVertex> = IndexedMeshLoader::new();
+    let teapot_loader: IndexedMeshLoader<vertex::BasicVertex> = IndexedMeshLoader::new();
 
     let jade_material = core_components::material::Basic::new(
         (0.135, 0.2225, 0.1575).into(),
@@ -181,7 +181,7 @@ fn run() -> Result<(), failure::Error> {
         (0.1 *  128.).into()
     );
 
-    let img = ImageLoader::new().load("tmp").unwrap();
+    let img = ImageLoader::new().load("resources/textures/penguin.png").unwrap();
 
     let tex = Texture::<Texture2D>::new(
         TexWrapMode::Repeat,
@@ -189,12 +189,20 @@ fn run() -> Result<(), failure::Error> {
         TexMinFilterMode::Linear,
         TexMagFilterMode::Linear
     );
-
+    let pixels =  img.as_rgb8().unwrap().to_vec();
     tex.storage_2d(img.width() as i32, img.height() as i32);
-    tex.sub_image_2d(img.width() as i32, img.height() as i32, img.as_rgb8().unwrap().as_bytes());
+    tex.sub_image_2d(img.width() as i32, img.height() as i32, &pixels);
 
+    let non_resident: NonResidentBindlessTexture<Texture2D> = tex.into();
 
-    let material_block = InterfaceBlock::<core_components::material::Basic>::new(&program, "Material", 3);
+    // let penguin_material = core_components::material::TexturedBasic::new(
+    //     (1.0, 1.0, 1.0).into(),
+    //     non_resident.into(),
+    //     (0.5, 0.5, 0.5).into(),
+    //     (96.078431).into()
+    // );
+
+    let material_block = InterfaceBlock::<core_components::material::TexturedBasic>::new(&program, "Material", 3);
 
     let color_buffer = ColorBuffer::from_color(na::Vector3::new(0.3, 0.3, 0.5));
     color_buffer.set_used();
@@ -205,14 +213,22 @@ fn run() -> Result<(), failure::Error> {
     world.resources.insert(matrices_block);
     world.resources.insert(material_block);
 
+    let component = vec![
+        (
+            transform,
+            core_components::material::TexturedBasic::new(
+                (1.0, 1.0, 1.0).into(),
+                non_resident.into(),
+                (0.5, 0.5, 0.5).into(),
+                (96.078431).into()
+            ),
+            teapot_loader.load("resources/meshes/penguin.mesh").unwrap()
+        )
+    ];
+
     world.insert(
         (),
-        (0..1).map(
-            |_| (
-                transform,
-                pearl_material,
-                teapot_loader.load("resources/meshes/triangle.mesh").unwrap())
-        )
+        component
     );
 
     world.insert(

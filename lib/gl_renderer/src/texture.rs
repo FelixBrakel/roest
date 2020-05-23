@@ -44,18 +44,18 @@ pub enum BindlessTexture<T> {
     NonResident(NonResidentBindlessTexture<T>),
 }
 
-impl<T> BindlessTexture<T> {
-    pub fn switch(&mut self) {
-        *self = match self {
-            BindlessTexture::Resident(t) => {
-                BindlessTexture::NonResident(t.into())
-            },
-            BindlessTexture::NonResident(t) => {
-                BindlessTexture::Resident(t.into())
-            }
-        }
-    }
-}
+// impl<T> BindlessTexture<T> {
+//     pub fn switch(&mut self) {
+//         *self = match self {
+//             BindlessTexture::Resident(t) => {
+//                 BindlessTexture::NonResident(t.into())
+//             },
+//             BindlessTexture::NonResident(t) => {
+//                 BindlessTexture::Resident(t.into())
+//             }
+//         }
+//     }
+// }
 
 pub struct ResidentBindlessTexture<T> {
     handle: gl::types::GLuint64,
@@ -95,7 +95,7 @@ impl<T: TextureType> NonResidentBindlessTexture<T> {
     }
 }
 
-impl<T> From<ResidentBindlessTexture<T>> for NonResidentBindlessTexture<T> {
+impl<T: TextureType> From<ResidentBindlessTexture<T>> for NonResidentBindlessTexture<T> {
     fn from(resident_tex: ResidentBindlessTexture<T>) -> Self {
         let non_resident_tex = NonResidentBindlessTexture { handle: resident_tex.handle, tex: resident_tex.tex };
         unsafe {
@@ -106,7 +106,7 @@ impl<T> From<ResidentBindlessTexture<T>> for NonResidentBindlessTexture<T> {
     }
 }
 
-impl<T> From<Texture<T>> for NonResidentBindlessTexture<T> {
+impl<T: TextureType> From<Texture<T>> for NonResidentBindlessTexture<T> {
     fn from(tex: Texture<T>) -> Self {
         NonResidentBindlessTexture::new(tex)
     }
@@ -204,7 +204,7 @@ impl<T> Texture<T>
     }
 }
 
-impl<T> GPUVariant for Texture<T> {
+impl<T> GPUVariant for ResidentBindlessTexture<T> {
     type Variant = GPUTexture;
     type ArrayVariant = GPUTextureArray;
 }

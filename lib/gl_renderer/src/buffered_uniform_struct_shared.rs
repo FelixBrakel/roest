@@ -362,12 +362,12 @@ impl GPUTextureArray {
 
     /// Setter method for the entire array, calls buf so it doesn't have to make an API call for every element in the
     /// buffer separately
-    pub fn set<T>(&self, data: &[ResidentBindlessTexture<T>]) {
+    pub fn set<T: TextureType>(&self, data: &[ResidentBindlessTexture<T>]) {
         self.ub.set_subset(&self.buf(data), self.offset as usize);
     }
 
     /// Used to create a buffer with the correct stride which can then be uploaded to the GPU in one go.
-    pub fn buf<T>(&self, data: &[ResidentBindlessTexture<T>]) -> Vec<u8> {
+    pub fn buf<T: TextureType>(&self, data: &[ResidentBindlessTexture<T>]) -> Vec<u8> {
         let mut buf = Vec::with_capacity(self.stride as usize * self.elems.len());
         for (i, tex) in data.iter().enumerate() {
             let slice = self.elems[i].buf(tex);

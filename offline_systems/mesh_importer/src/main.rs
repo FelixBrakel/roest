@@ -60,9 +60,8 @@ fn main() {
         let y_n = m.normals[i*3 + 1];
         let z_n = m.normals[i*3 + 2];
 
-        let u = m.texcoords[i*3];
-        let v = m.texcoords[i*3 + 1];
-
+        let u = m.texcoords[i*2];
+        let v = m.texcoords[i*2 + 1];
         verts.push(BasicVertex {
             pos: (x_normalized, y_normalized, z_normalized).into(),
             normal: (x_n, y_n, z_n).into(),
