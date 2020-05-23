@@ -44,6 +44,19 @@ pub enum BindlessTexture<T> {
     NonResident(NonResidentBindlessTexture<T>),
 }
 
+impl<T> BindlessTexture<T> {
+    pub fn switch(&mut self) {
+        *self = match self {
+            BindlessTexture::Resident(t) => {
+                BindlessTexture::NonResident(t.into())
+            },
+            BindlessTexture::NonResident(t) => {
+                BindlessTexture::Resident(t.into())
+            }
+        }
+    }
+}
+
 pub struct ResidentBindlessTexture<T> {
     handle: gl::types::GLuint64,
     tex: Texture<T>

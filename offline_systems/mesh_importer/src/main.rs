@@ -1,7 +1,7 @@
 use std::path::Path;
 use clap::{App, load_yaml};
 use gl_renderer::{IndexedVertArray, VertexAttribPointers};
-use gl_renderer::vertex::NormalVertex;
+use gl_renderer::vertex::{NormalVertex, BasicVertex};
 use std::fs;
 use std::io::Write;
 use std::f32;
@@ -17,7 +17,7 @@ fn main() {
     let m = &obj_file[0].mesh;
 
     let mut tuples: Vec<(f32, f32, f32)> = Vec::with_capacity(m.indices.len() / 3);
-    let mut verts: Vec<NormalVertex> = Vec::with_capacity(m.indices.len() / 3);
+    let mut verts: Vec<BasicVertex> = Vec::with_capacity(m.indices.len() / 3);
 
     let mut max: f32 = 0.;
     let mut min: f32 = 0.;
@@ -60,9 +60,13 @@ fn main() {
         let y_n = m.normals[i*3 + 1];
         let z_n = m.normals[i*3 + 2];
 
-        verts.push(NormalVertex {
+        let u = m.texcoords[i*3];
+        let v = m.texcoords[i*3 + 1];
+
+        verts.push(BasicVertex {
             pos: (x_normalized, y_normalized, z_normalized).into(),
-            normal: (x_n, y_n, z_n).into()
+            normal: (x_n, y_n, z_n).into(),
+            uv: (u, v).into()
         });
     }
 

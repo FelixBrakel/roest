@@ -6,7 +6,7 @@ use crate::uniform_buffer::{UniformBlock};
 use crate::Program;
 use failure::_core::marker::PhantomData;
 use std::sync::Arc;
-use crate::texture::{Texture, TextureType, ResidentBindlessTexture};
+use crate::texture::{Texture, TextureType, ResidentBindlessTexture, BindlessTexture};
 
 pub trait GPUVariant {
     type Variant;
