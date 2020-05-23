@@ -1,9 +1,10 @@
 pub mod data;
 pub mod buffer;
 pub mod vertex;
-pub mod uniform_struct_shared;
+pub mod buffered_uniform_struct_shared;
 pub mod uniform_buffer;
 pub mod light;
+pub mod texture;
 
 mod viewport;
 mod shader;
@@ -17,7 +18,7 @@ pub use program::{Program, Error as ProgramError, GlUniform};
 pub use indexed_vert_array::{IndexedVertArray};
 pub use color_buffer::ColorBuffer;
 pub use renderer_derive::{VertexAttribPointers, gl_getters, gl_setters, GPUVariant};
-pub use uniform_struct_shared::{GPUVariant, GPUAggregate, GPUAggregateArray};
+pub use buffered_uniform_struct_shared::{GPUVariant, GPUAggregate, GPUAggregateArray};
 
 use std::ffi::{CString};
 

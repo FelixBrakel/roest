@@ -1,7 +1,7 @@
 use crate::buffer::{UniformBuffer};
 use crate::{Program};
 use std::ffi::CString;
-use crate::uniform_struct_shared::{GPUAggregate, GPUVariant};
+use crate::buffered_uniform_struct_shared::{GPUAggregate, GPUVariant};
 use std::os::raw::c_char;
 use std::sync::Arc;
 

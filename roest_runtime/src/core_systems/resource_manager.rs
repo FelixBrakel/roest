@@ -38,7 +38,7 @@ lazy_static!(
 );
 
 // Converts a path relative to the project root to an absolute one
-fn file_name_to_path(name: impl AsRef<Path>) -> Result<PathBuf, Error> {
+pub fn file_name_to_path(name: impl AsRef<Path>) -> Result<PathBuf, Error> {
     Ok(CONFIG.root_path.join(name))
 }
 

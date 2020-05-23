@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::{Program, GPUVariant, uniform_struct_shared::{GPUBasic, GPUBasicArray}};
+use crate::{Program, GPUVariant, buffered_uniform_struct_shared::{GPUBasic, GPUBasicArray}};
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug, Serialize, Deserialize, Default)]

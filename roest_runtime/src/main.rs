@@ -14,10 +14,12 @@ use gl_renderer::{
     light::*,
     uniform_buffer::InterfaceBlock
 };
-use core_systems::resource_manager::data_loaders::{IndexedMeshLoader};
+use core_systems::resource_manager::data_loaders::{IndexedMeshLoader, ImageLoader};
 use crate::core_systems::resource_manager::Loader;
 use crate::core_systems::resource_manager::data_loaders::ProgramLoader;
 use crate::core_components::Transform;
+use gl_renderer::texture::{Texture, Texture2D, TexWrapMode, TexMinFilterMode, TexMagFilterMode};
+use image::GenericImageView;
 
 #[derive(GPUVariant, Default)]
 pub struct Lights {
@@ -135,7 +137,7 @@ fn run() -> Result<(), failure::Error> {
     let transform = core_components::Transform::new(
         1.,
         na::Vector3::new(0., 0., -2.),
-        na::UnitQuaternion::from_euler_angles(0., 0., 0.),
+        na::UnitQuaternion::from_euler_angles(0.2, 0., 0.),
     );
 
     let cam_rot = mat3::new(
@@ -179,6 +181,18 @@ fn run() -> Result<(), failure::Error> {
         (0.1 *  128.).into()
     );
 
+    let img = ImageLoader::new().load("tmp").unwrap();
+
+    let tex = Texture::<Texture2D>::new(
+        TexWrapMode::Repeat,
+        TexWrapMode::Repeat,
+        TexMinFilterMode::Linear,
+        TexMagFilterMode::Linear
+    );
+
+    tex.storage_2d(img.width() as i32, img.height() as i32);
+    tex.sub_image_2d(img.width() as i32, img.height() as i32, img.as_rgb8().unwrap().as_bytes());
+
 
     let material_block = InterfaceBlock::<core_components::material::Basic>::new(&program, "Material", 3);
 
@@ -212,7 +226,7 @@ fn run() -> Result<(), failure::Error> {
                     linear: (0.35).into(),
                     quadratic: (0.44).into(),
                     ambient: (0.2, 0.2, 0.2).into(),
-                    diffuse: (0.5, 0.5, 0.5).into(),
+                    diffuse: (0.7, 0.7, 0.7).into(),
                     specular: (1.0, 1.0, 1.0).into()
                 }
                 )
@@ -230,7 +244,7 @@ fn run() -> Result<(), failure::Error> {
                     linear: (0.35).into(),
                     quadratic: (0.44).into(),
                     ambient: (0.25, 0.175, 0.175).into(),
-                    diffuse: (0.6, 0.45, 0.45).into(),
+                    diffuse: (0.8, 0.65, 0.65).into(),
                     specular: (1.0, 1.0, 1.0).into()
                 }
             )

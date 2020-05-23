@@ -21,6 +21,7 @@ bincode = "1.2.1"
 legion = "0.2.1"
 hibitset = "0.6.3"
 approx = "0.3.2"
+image = "0.23.4"
 
 [build-dependencies]
 walkdir = "2.2.9"
