@@ -2,6 +2,8 @@ use failure::err_msg;
 use nalgebra as na;
 mod core_systems;
 mod core_components;
+
+pub mod core_resources;
 use legion::prelude::*;
 
 use gl_renderer::{
@@ -12,13 +14,32 @@ use gl_renderer::{
     data::matrix_data::{mat3, mat4},
     data::vector_data,
     light::*,
-    uniform_buffer::InterfaceBlock
+    uniform_buffer::InterfaceBlock,
+    texture::{
+        Texture,
+        Texture2D,
+        TexWrapMode,
+        TexMinFilterMode,
+        TexMagFilterMode,
+        NonResidentBindlessTexture,
+        ResidentBindlessTexture
+    }
 };
-use core_systems::resource_manager::data_loaders::{IndexedMeshLoader, ImageLoader};
-use crate::core_systems::resource_manager::Loader;
-use crate::core_systems::resource_manager::data_loaders::ProgramLoader;
-use crate::core_components::Transform;
-use gl_renderer::texture::{Texture, Texture2D, TexWrapMode, TexMinFilterMode, TexMagFilterMode, NonResidentBindlessTexture};
+
+use core_systems::resource_manager::{
+    Loader,
+    data_loaders::{
+        ProgramLoader,
+        IndexedMeshLoader,
+        ImageLoader
+    }
+};
+
+use core_components::{
+    Transform
+};
+
+
 use image::GenericImageView;
 
 #[derive(GPUVariant, Default)]
@@ -154,34 +175,13 @@ fn run() -> Result<(), failure::Error> {
         100.
     );
 
-    let program = ProgramLoader::new().load("resources/shaders/basic").unwrap();
+    let program = ProgramLoader::new().load("core_resources/shaders/basic").unwrap();
     let lights_block = InterfaceBlock::<Lights>::new(&program, "Lights", 1);
     let matrices_block = InterfaceBlock::<Matrices>::new(&program, "Matrices", 2);
 
     let teapot_loader: IndexedMeshLoader<vertex::BasicVertex> = IndexedMeshLoader::new();
 
-    let jade_material = core_components::material::Basic::new(
-        (0.135, 0.2225, 0.1575).into(),
-        (0.54, 0.89, 0.63).into(),
-        (0.316228, 0.316228, 0.316228).into(),
-        (0.1 * 128.).into()
-    );
-
-    let pearl_material = core_components::material::Basic::new(
-        (0.25, 0.20725, 0.20725).into(),
-        (1., 0.829, 0.829).into(),
-        (0.296648, 0.296648, 0.296648).into(),
-        (0.088 *  128.).into()
-    );
-
-    let turquoise_material = core_components::material::Basic::new(
-        (0.1, 0.18725, 0.1745).into(),
-        (0.396, 0.74151, 0.69102).into(),
-        (0.297254, 0.30829, 0.306678).into(),
-        (0.1 *  128.).into()
-    );
-
-    let img = ImageLoader::new().load("resources/textures/penguin.png").unwrap();
+    let img = ImageLoader::new().load("core_resources/textures/penguin.png").unwrap();
 
     let tex = Texture::<Texture2D>::new(
         TexWrapMode::Repeat,
@@ -189,18 +189,19 @@ fn run() -> Result<(), failure::Error> {
         TexMinFilterMode::Linear,
         TexMagFilterMode::Linear
     );
-    let pixels =  img.as_rgb8().unwrap().to_vec();
+    let pixels =  img.to_rgba().into_raw();
     tex.storage_2d(img.width() as i32, img.height() as i32);
     tex.sub_image_2d(img.width() as i32, img.height() as i32, &pixels);
 
     let non_resident: NonResidentBindlessTexture<Texture2D> = tex.into();
+    let resident: ResidentBindlessTexture<Texture2D> = non_resident.into();
 
-    // let penguin_material = core_components::material::TexturedBasic::new(
-    //     (1.0, 1.0, 1.0).into(),
-    //     non_resident.into(),
-    //     (0.5, 0.5, 0.5).into(),
-    //     (96.078431).into()
-    // );
+    let penguin_material = core_components::material::TexturedBasic::new(
+        (0.25, 0.20725, 0.20725).into(),
+        resident,
+        (0.0296648*2., 0.0296648*2., 0.0296648*2.).into(),
+        (5.078431).into()
+    );
 
     let material_block = InterfaceBlock::<core_components::material::TexturedBasic>::new(&program, "Material", 3);
 
@@ -213,22 +214,17 @@ fn run() -> Result<(), failure::Error> {
     world.resources.insert(matrices_block);
     world.resources.insert(material_block);
 
-    let component = vec![
+    let entity = vec![
         (
             transform,
-            core_components::material::TexturedBasic::new(
-                (1.0, 1.0, 1.0).into(),
-                non_resident.into(),
-                (0.5, 0.5, 0.5).into(),
-                (96.078431).into()
-            ),
-            teapot_loader.load("resources/meshes/penguin.mesh").unwrap()
+            penguin_material,
+            teapot_loader.load("core_resources/meshes/penguin.mesh").unwrap()
         )
     ];
 
     world.insert(
         (),
-        component
+        entity
     );
 
     world.insert(
@@ -259,8 +255,8 @@ fn run() -> Result<(), failure::Error> {
                     constant: (1.).into(),
                     linear: (0.35).into(),
                     quadratic: (0.44).into(),
-                    ambient: (0.25, 0.175, 0.175).into(),
-                    diffuse: (0.8, 0.65, 0.65).into(),
+                    ambient: (0.2, 0.2, 0.2).into(),
+                    diffuse: (0.8, 0.8, 0.85).into(),
                     specular: (1.0, 1.0, 1.0).into()
                 }
             )

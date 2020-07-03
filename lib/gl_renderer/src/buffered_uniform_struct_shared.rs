@@ -8,6 +8,12 @@ use failure::_core::marker::PhantomData;
 use std::sync::Arc;
 use crate::texture::{Texture, TextureType, ResidentBindlessTexture, BindlessTexture};
 
+fn to_byte_slice<'a, T>(data: &'a [T]) -> &'a [u8] {
+    unsafe {
+        from_raw_parts(data.as_ptr() as *const u8, size_of::<T>() * data.len())
+    }
+}
+
 pub trait GPUVariant {
     type Variant;
     type ArrayVariant;
@@ -314,14 +320,15 @@ impl GPUTexture {
     }
 
     pub fn set<T: TextureType>(&self, tex: &ResidentBindlessTexture<T>) {
-        self.ub.set_subset(self.buf(tex), self.offset as usize);
+        self.ub.set_subset(&[tex.get_handle()], self.offset as usize);
     }
 
-    pub fn buf<T: TextureType>(&self, tex: &ResidentBindlessTexture<T>) -> &[u8] {
-        unsafe {
-            let tmp: *const gl::types::GLuint64 = &tex.get_handle();
-            from_raw_parts(tmp as *const u8, size_of::<gl::types::GLuint64>())
-        }
+    pub fn buf<T: TextureType>(&self, tex: &ResidentBindlessTexture<T>) -> gl::types::GLuint64 {
+        tex.get_handle()
+        // unsafe {
+        //     let tmp: *const gl::types::GLuint64 = &handle;
+            // from_raw_parts(tex.get_handle() as *const gl::types::GLuint64 as *const u8, size_of::<gl::types::GLuint64>())
+        // }
     }
 }
 
@@ -370,7 +377,8 @@ impl GPUTextureArray {
     pub fn buf<T: TextureType>(&self, data: &[ResidentBindlessTexture<T>]) -> Vec<u8> {
         let mut buf = Vec::with_capacity(self.stride as usize * self.elems.len());
         for (i, tex) in data.iter().enumerate() {
-            let slice = self.elems[i].buf(tex);
+            let handle_slice = &[self.elems[i].buf(tex)];
+            let slice = to_byte_slice(handle_slice);
             let slice_len = slice.len();
             buf.extend(slice);
             buf.resize(buf.len() + self.stride as usize - slice_len, 0);

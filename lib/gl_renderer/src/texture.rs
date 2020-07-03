@@ -202,6 +202,12 @@ impl<T> Texture<T>
             )
         }
     }
+
+    pub fn bind(&self) {
+        unsafe {
+            gl::BindTexture(T::TEXTURE_TYPE, self.to);
+        }
+    }
 }
 
 impl<T> GPUVariant for ResidentBindlessTexture<T> {

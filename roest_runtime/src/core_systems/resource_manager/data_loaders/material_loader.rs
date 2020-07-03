@@ -24,7 +24,7 @@ impl Loader for FlatMatLoader {
     type R = flat::Material;
 
     fn load(&self, name: impl AsRef<Path>) -> Result<flat::Material, Error>{
-        let program = ProgramLoader::new(self.gl.clone()).load("resources/shaders/basic")
+        let program = ProgramLoader::new(self.gl.clone()).load("core_resources/shaders/basic")
             .map_err(|e| Error::ProgramLoader(e))?;
 
         Ok(flat::Material::new(self.gl.clone(), program))

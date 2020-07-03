@@ -21,9 +21,9 @@ impl RendererSystem {
             .read_resource::<Program>()
             .read_resource::<InterfaceBlock<Lights>>()
             .read_resource::<InterfaceBlock<Matrices>>()
-            .read_resource::<InterfaceBlock<material::Basic>>()
+            .read_resource::<InterfaceBlock<material::TexturedBasic>>()
             .with_query(<(Read<Camera>,)>::query())
-            .with_query(<(Read<Transform>, Read<material::Basic>, Read<IndexedMesh>)>::query())
+            .with_query(<(Read<Transform>, Read<material::TexturedBasic>, Read<IndexedMesh>)>::query())
             .with_query(<(Read<Transform>, Read<PointLight>)>::query())
             .build_thread_local( move |_, world, resource, (cam_query, mesh_query, light_query)| {
                 let (program, gpu_lights, gpu_matrices, gpu_material) = resource;
