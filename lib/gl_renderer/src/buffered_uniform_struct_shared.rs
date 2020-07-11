@@ -6,7 +6,7 @@ use crate::uniform_buffer::{UniformBlock};
 use crate::Program;
 use failure::_core::marker::PhantomData;
 use std::sync::Arc;
-use crate::texture::{Texture, TextureType, ResidentBindlessTexture, BindlessTexture};
+use crate::texture::{TextureType, ResidentBindlessTexture};
 
 fn to_byte_slice<'a, T>(data: &'a [T]) -> &'a [u8] {
     unsafe {

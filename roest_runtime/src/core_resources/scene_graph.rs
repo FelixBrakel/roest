@@ -1,12 +1,11 @@
 use legion::entity::Entity;
-use petgraph::{Graph};
 use std::fmt;
 use std::collections::HashMap;
-use std::ops::{Index, IndexMut};
-use serde::de::{self, DeserializeSeed, Visitor, SeqAccess, Error};
+use serde::de::{DeserializeSeed, Visitor, SeqAccess, Error};
 use serde::{Deserializer, Serialize, Serializer};
 use serde::ser::SerializeStruct;
-use super::tree::{TreeIndex, TreeError, Tree, TreeNode};
+use slotted_tree::{Tree, TreeKey, TreeError};
+
 
 pub struct DeMap {
     entity_map: HashMap<uuid::Bytes, Entity>
@@ -18,49 +17,24 @@ pub struct SerSceneGraph {
 }
 
 pub struct SceneGraph {
-    root: TreeIndex,
     tree: Tree<Entity>,
-    listeners: Vec<dyn >
 }
 
 impl SceneGraph {
     pub fn new(root_entity: Entity) -> Result<Self, TreeError> {
-        let mut tree: Tree<Entity> = Default::default();
-        let root = tree.add_orphan(TreeNode::new(root_entity))?;
+        let tree: Tree<Entity> = Tree::new(root_entity);
 
         Ok(SceneGraph {
-            root,
             tree
         })
     }
 
-    pub fn add_child(&mut self, parent: TreeIndex, child: Entity) -> Result<TreeIndex, TreeError> {
-        self.tree.add_child(parent, TreeNode::new(child))
-    }
-
-    pub fn root(&self) -> TreeIndex {
-        self.root
+    pub fn add_child(&mut self, parent: TreeKey, child: Entity) -> Result<TreeKey, TreeError> {
+        self.tree.add_child(parent, child)
     }
 
     pub fn tree(&self) -> &Tree<Entity> {
         &self.tree
-    }
-}
-
-impl Index<TreeIndex> for SceneGraph {
-    type Output = Entity;
-
-    fn index(&self, node: TreeIndex) -> &Entity {
-        let node = &self.tree[node];
-
-        let node = match node {
-            Some(n) => {
-                n
-            }
-            None => panic!("Node at index does not exist")
-        };
-
-        node.get_val()
     }
 }
 
@@ -78,8 +52,6 @@ impl<'de> DeserializeSeed<'de> for DeMap {
             }
 
             fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
-                let root = seq.next_element()?
-                    .ok_or_else(|| Error::invalid_length(0, &self))?;
                 let uuid_tree: Tree<uuid::Bytes> = seq.next_element()?
                     .ok_or_else(|| Error::invalid_length(1, &self))?;
 
@@ -88,7 +60,7 @@ impl<'de> DeserializeSeed<'de> for DeMap {
                     |_, node| self.0.entity_map.get(node).unwrap().clone()
                 );
 
-                Ok(SceneGraph { root, tree })
+                Ok(SceneGraph { tree })
             }
 
             //TODO: support more serializers by implementing visit_map
@@ -105,8 +77,7 @@ impl Serialize for SerSceneGraph {
             |_, node| self.entity_map.get(node).unwrap().clone(),
         );
 
-        ser.serialize_field("root", &self.scene_graph.root);
-        ser.serialize_field("graph", &uuid_graph);
+        ser.serialize_field("graph", &uuid_graph)?;
         ser.end()
     }
 }

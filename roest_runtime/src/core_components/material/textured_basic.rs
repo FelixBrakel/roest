@@ -1,5 +1,5 @@
 use gl_renderer::data::{vector_data::*};
-use gl_renderer::{Program, GlUniform, GPUVariant};
+use gl_renderer::{GPUVariant};
 use gl_renderer::texture::{Texture2D, ResidentBindlessTexture};
 
 #[derive(GPUVariant)]

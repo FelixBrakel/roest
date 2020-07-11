@@ -21,8 +21,8 @@ bincode = "1.2.1"
 legion = "0.2.2"
 approx = "0.3.2"
 image = "0.23.4"
-petgraph = { version = "0.5.1", features = ["serde-1"] }
-uuid = { version = "0.8.1", default-features = false, features = [ "v4" ]}
+uuid = { version = "0.8.1", default-features = false, features = [ "v4" ] }
+slotted_tree = { path = "../lib/slotted_tree" }
 
 [build-dependencies]
 walkdir = "2.2.9"

@@ -1,2 +1,2 @@
 [workspace]
-members = ["roest_runtime", "offline_systems/*", "lib/*"]
+members = ["roest_runtime", "offline_systems/*", "lib/*", "scene_editor"]

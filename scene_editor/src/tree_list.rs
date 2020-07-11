@@ -3,7 +3,6 @@ use std::{
         Vec,
         IntoIter
     },
-    rc::Rc
 };
 use tui::{
     widgets::{
@@ -16,40 +15,131 @@ use tui::{
     layout::Rect,
     buffer::Buffer,
 };
-use roest_runtime::core_resources::scene_graph::SceneGraph;
-use roest_runtime::core_resources::tree::{TreeIndex, Tree};
 use legion::prelude::Entity;
 use tui::style::Style;
+use slotted_tree::{
+    TreeKey,
+    SecondaryTree,
+    Tree
+};
 
 pub struct StatefulTreeList<'a> {
     tree: &'a Tree<Entity>,
-    collapsed: Tree<bool>,
+    collapsed: SecondaryTree<bool>,
     state: TreeListState
 }
 
-impl StatefulTreeList {
-    pub fn new(tree: &Tree<Entity>) -> Self {
-        let collapsed = tree.map(|| false);
+impl<'a> StatefulTreeList<'a> {
+    pub fn new(tree: &'a Tree<Entity>) -> Self {
+        let collapsed = tree.map_to_secondary(|_, _| false);
         StatefulTreeList {
             tree,
             collapsed,
             state: TreeListState::default()
         }
     }
+
+    pub fn next(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                    i + 1
+            }
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
+
+    pub fn previous(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                i - 1
+            }
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
+
+    pub fn unselect(&mut self) {
+        self.state.select(None);
+    }
+
+    pub fn to_tree_list(&mut self, root: TreeKey) -> (TreeList, TreeListState) {
+        let items = self.pruned_dfs(root, 0);
+
+        let len = items.len();
+        let tree_list = TreeList::from_items(items);
+        match self.state.selected() {
+            Some(i) => {
+                if i > (len - 1) as i32 {
+                    self.state.select(Some(0));
+                } else if i < 0 {
+                    self.state.select(Some((len - 1) as i32))
+                }
+            }
+            None => ()
+        }
+
+        (tree_list, self.state)
+    }
+
+    fn pruned_dfs(&self, node: TreeKey, indent: u8) -> Vec<TreeListItem> {
+        let mut out = Vec::new();
+
+
+        let prune_node = match self.collapsed.get(node) {
+            Some(b) => { *b },
+            None => false
+        };
+
+        let len = self.tree.children(node).unwrap().len();
+
+        let mut collapsed_symb = "";
+        if len > 0 {
+            if prune_node {
+                collapsed_symb = "▶"
+            } else {
+                collapsed_symb = "▼"
+            }
+        }
+
+        out.push(TreeListItem::new(node, indent, format!("{}test", collapsed_symb)));
+
+
+        if !prune_node {
+            match self.tree.children(node) {
+                Some(children) => {
+                    for c in children {
+                        out.extend(self.pruned_dfs(*c, indent + 1))
+                    }
+                }
+                None => (),
+            }
+        }
+
+        out
+    }
+
+    pub fn collapse(&mut self, node: TreeKey) {
+        self.collapsed.insert(node, true);
+    }
+
+    pub fn expand(&mut self, node: TreeKey) {
+        self.collapsed.insert(node, false);
+    }
 }
 
-pub struct TreeListItem<'a> {
-    idx: TreeIndex,
+pub struct TreeListItem {
+    idx: TreeKey,
     indent: u8,
-    name: &'a str,
+    name: String,
 }
 
-impl<'a> TreeListItem<'a> {
-    pub fn new(idx: TreeIndex, indent: u8, name: &'a str) -> Self {
+impl TreeListItem {
+    pub fn new<T: AsRef<str>>(idx: TreeKey, indent: u8, name: T) -> Self {
         TreeListItem {
             idx,
             indent,
-            name
+            name: name.as_ref().to_string()
         }
     }
 
@@ -60,7 +150,7 @@ impl<'a> TreeListItem<'a> {
 }
 
 pub struct TreeList<'a> {
-    items: Vec<TreeListItem<'a>>,
+    items: Vec<TreeListItem>,
     style: Style,
     highlight_style: Style,
     highlight_symbol: Option<&'a str>,
@@ -68,7 +158,15 @@ pub struct TreeList<'a> {
 }
 
 impl<'a> TreeList<'a> {
-    pub fn from_tree(tree: &'a Tree<Entity>, root: TreeIndex) -> Self {
+    pub fn get(&self, idx: usize) -> Option<TreeKey> {
+        match self.items.get(idx) {
+            Some(item) => Some(item.idx),
+            None => None
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn from_tree(tree: &'a Tree<Entity>, root: TreeKey) -> Self {
         TreeList {
             items: Self::dfs(tree, root, 0),
             style: Style::default(),
@@ -78,8 +176,14 @@ impl<'a> TreeList<'a> {
         }
     }
 
-    pub fn from_stateful_tree(tree: &'a StatefulTreeList, root: TreeIndex) -> Self {
-
+    pub fn from_items(items: Vec<TreeListItem>) -> Self {
+        TreeList {
+            items,
+            style: Style::default(),
+            highlight_style: Style::default(),
+            highlight_symbol: None,
+            indent_symbol: "    "
+        }
     }
 
     pub fn style(mut self, style: Style) -> Self {
@@ -94,6 +198,7 @@ impl<'a> TreeList<'a> {
         self
     }
 
+    #[allow(dead_code)]
     pub fn highlight_symbol(mut self, highlight_symbol: &'a str) -> Self {
         self.highlight_symbol = Some(highlight_symbol);
 
@@ -106,20 +211,13 @@ impl<'a> TreeList<'a> {
         self
     }
 
-    fn dfs_pruned(tree &Tree<Entity>, prune_mape: Tree<bool>)
-
-
-    fn dfs(tree: &Tree<Entity>, node: TreeIndex, indent: u8) -> Vec<TreeListItem> {
+    fn dfs(tree: &Tree<Entity>, node: TreeKey, indent: u8) -> Vec<TreeListItem> {
         let mut out = Vec::new();
         out.push(TreeListItem::new(node, indent, "test"));
 
-        match &tree[node] {
-            Some(n) => {
-                for c in n.get_children() {
-                    out.extend(TreeList::dfs(tree, *c, indent + 1))
-                }
-            }
-            None => (),
+        let ch = tree.children(node).unwrap();
+        for c in ch {
+            out.extend(TreeList::dfs(tree, *c, indent + 1))
         }
 
         out
@@ -162,17 +260,18 @@ impl<'a> StatefulWidget for TreeList<'a> {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct TreeListState {
     offset: usize,
-    selected: Option<usize>,
+    selected: Option<i32>,
 }
 
 impl TreeListState {
-    pub fn selected(&self) -> Option<usize> {
+    pub fn selected(&self) -> Option<i32> {
         self.selected
     }
 
-    pub fn select(&mut self, index: Option<usize>) {
+    pub fn select(&mut self, index: Option<i32>) {
         self.selected = index;
         if index.is_none() {
             self.offset = 0;
@@ -181,7 +280,12 @@ impl TreeListState {
 
     pub fn to_list_state(&self) -> ListState {
         let mut state = ListState::default();
-        state.select(self.selected);
+        state.select(match self.selected {
+            Some(i) => {
+                Some(i as usize)
+            }
+            None => None
+        });
 
         state
     }

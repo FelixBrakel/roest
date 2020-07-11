@@ -10,6 +10,10 @@ impl ComponentRepresentation {
             name
         }
     }
+
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
 }
 
 pub trait EditorComponent: Component {
