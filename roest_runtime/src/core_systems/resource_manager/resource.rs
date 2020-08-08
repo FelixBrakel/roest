@@ -12,7 +12,7 @@ use std::path::{Path,};
 pub trait Loader {
     // Error that the implementation of this struct will throw in case of some problem, this error
     // should encase any underlying error with for example the file system.
-    type E: std::fmt::Debug + failure::Fail;
+    type E: std::fmt::Debug + std::error::Error;
     // Resource loaded from disc
     type R;
 

@@ -1,15 +1,14 @@
 use legion::prelude::*;
 use crate::core_components::{
     IndexedMesh,
-    IMeshDefaults,
     Camera,
     Transform,
     material,
 };
-use crate::{Lights, Matrices};
+use crate::core_resources::gpu_blocks::{Lights, Matrices};
 use gl_renderer::{Program, GPUAggregate};
 use gl_renderer::uniform_buffer::InterfaceBlock;
-use nalgebra::{Point, U3, Matrix};
+use nalgebra::{U3};
 use nalgebra as na;
 use gl_renderer::light::PointLight;
 
@@ -22,20 +21,21 @@ impl RendererSystem {
             .read_resource::<InterfaceBlock<Lights>>()
             .read_resource::<InterfaceBlock<Matrices>>()
             .read_resource::<InterfaceBlock<material::TexturedBasic>>()
-            .with_query(<(Read<Camera>,)>::query())
+            .with_query(Read::<Camera>::query())
             .with_query(<(Read<Transform>, Read<material::TexturedBasic>, Read<IndexedMesh>)>::query())
             .with_query(<(Read<Transform>, Read<PointLight>)>::query())
+            .read_component::<Camera>() // This
             .build_thread_local( move |_, world, resource, (cam_query, mesh_query, light_query)| {
                 let (program, gpu_lights, gpu_matrices, gpu_material) = resource;
 
-                for (camera,) in cam_query.iter(&mut *world) {
+                for camera in cam_query.iter(world) {
                     let vp = camera.perspective * camera.view;
                     gpu_matrices.uniform_struct.v.set(&camera.view);
                     gpu_matrices.uniform_struct.p.set(&camera.perspective);
 
 
                     let mut lights = Lights::default();
-                    for (transform, point_light) in light_query.iter(&mut *world) {
+                    for (transform, point_light) in light_query.iter(world) {
                         let mut light = (*point_light).clone();
                         let pos_vec = na::Vector4::new(
                             light.position.d0,
@@ -49,12 +49,17 @@ impl RendererSystem {
                         light.position.d1 = new_pos_vec[1];
                         light.position.d2 = new_pos_vec[2];
 
-                        lights.add_point_light(light);
+                        match lights.add_point_light(light) {
+                            Ok(_) => (),
+                            Err(_) => {
+                                println!("WARNING: max points lights reached")
+                            }
+                        };
                     }
 
                     gpu_lights.uniform_struct.set(&lights);
 
-                    for (mesh_transform, material, mesh) in mesh_query.iter(&mut *world) {
+                    for (mesh_transform, material, mesh) in mesh_query.iter(world) {
                         let model: na::Matrix4<f32> = mesh_transform.model();
                         let mvp = vp * model;
                         let mv = camera.view * model;

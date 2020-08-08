@@ -1,11 +1,11 @@
 use crate::core_systems::resource_manager::data_loaders::{PrLoaderError, ProgramLoader};
 use crate::core_systems::resource_manager::Loader;
 use std::path::Path;
-use failure::Fail;
+use thiserror::Error;
 
-#[derive(Fail, Debug)]
+#[derive(Debug, Error)]
 pub enum Error {
-    #[fail(display = "Program Loader error")]
+    #[error("Program Loader error")]
     ProgramLoader(#[cause] PrLoaderError)
 }
 

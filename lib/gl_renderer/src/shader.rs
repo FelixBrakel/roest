@@ -1,10 +1,10 @@
 use std::ffi::{CStr};
-use failure::Fail;
+use thiserror::Error;
 use super::{create_initialized_cstring};
 
-#[derive(Debug, Fail)]
+#[derive(Debug, Error)]
 pub enum Error {
-   #[fail(display = "Failed to compile shader: {}", message)]
+   #[error("Failed to compile shader: {}", message)]
     CompileError { message: String },
 }
 

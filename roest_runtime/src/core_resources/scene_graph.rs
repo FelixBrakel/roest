@@ -36,6 +36,10 @@ impl SceneGraph {
     pub fn tree(&self) -> &Tree<Entity> {
         &self.tree
     }
+
+    pub fn tree_mut(&mut self) -> &mut Tree<Entity> {
+        &mut self.tree
+    }
 }
 
 impl<'de> DeserializeSeed<'de> for DeMap {

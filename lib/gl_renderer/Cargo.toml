@@ -9,9 +9,9 @@ edition = "2018"
 [dependencies]
 gl = { path = "../gl" }
 renderer_derive = { path = "../renderer_derive" }
-nalgebra = "0.20.0"
+nalgebra = "0.21.1"
 half = { version = "1.5.0", features = ["serde"] }
-failure = "0.1.7"
 vec-2-10-10-10 = "0.1.2"
 serde = { version = "1.0.106", features = ["derive"] }
 c_str_macro = "1.0.2"
+thiserror = "1.0.20"

@@ -2,14 +2,14 @@ use gl_renderer::{Program, ProgramError, Shader};
 use std::path::{Path};
 use crate::core_systems::resource_manager::{Loader};
 use super::{ShaderLoader, ShLoaderError};
-use failure::Fail;
+use thiserror::Error;
 
-#[derive(Debug, Fail)]
+#[derive(Debug, Error)]
 pub enum Error {
-    #[fail(display = "ShaderLoader error")]
-    ShaderLoader { name: String, #[cause] inner: ShLoaderError},
-    #[fail(display = "Program error")]
-    Program { name: String, #[cause] inner: ProgramError }
+    #[error("ShaderLoader error")]
+    ShaderLoader { name: String, #[source] inner: ShLoaderError},
+    #[error("Program error")]
+    Program { name: String, #[source] inner: ProgramError }
 }
 
 pub struct ProgramLoader {  }

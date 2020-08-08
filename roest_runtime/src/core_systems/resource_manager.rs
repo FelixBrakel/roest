@@ -6,16 +6,16 @@ use roefs::synchronous::{File};
 use std::path::{Path, PathBuf};
 use std::ffi::{CString};
 use lazy_static::{lazy_static};
-use failure::Fail;
+use thiserror::Error;
 
-#[derive(Debug, Fail)]
+#[derive(Debug, Error)]
 pub enum Error {
-    #[fail(display = "Failed to read CString from file that contains 0")]
+    #[error("Failed to read CString from file that contains 0")]
     FileContainsNil,
-    #[fail(display = "Failed to get executable path")]
+    #[error("Failed to get executable path")]
     FailedToGetExePath,
-    #[fail(display = "I/O error")]
-    Roefs(#[cause] roefs::Error),
+    #[error("I/O error")]
+    Roefs(#[source] roefs::Error),
 }
 
 impl From<roefs::Error> for Error {

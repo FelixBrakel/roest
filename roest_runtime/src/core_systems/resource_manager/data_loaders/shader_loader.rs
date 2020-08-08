@@ -2,15 +2,15 @@ use gl_renderer::{Shader, ShaderError};
 use std::path::{Path};
 use crate::core_systems::resource_manager::{Loader, read_to_cstring};
 use crate::core_systems::resource_manager;
-use failure::Fail;
+use thiserror::Error;
 
-#[derive(Debug, Fail)]
+#[derive(Debug, Error)]
 pub enum Error {
-    #[fail(display = "Shader error {}", name)]
-    Shader { name: String, #[cause] inner:  ShaderError },
-    #[fail(display = "Failed to load resource {}", name)]
-    ResourceLoad { name: String, #[cause] inner: resource_manager::Error },
-    #[fail(display = "Can not determine shader type for resource {}", name)]
+    #[error("Shader error {}", name)]
+    Shader { name: String, #[source] inner:  ShaderError },
+    #[error("Failed to load resource {}", name)]
+    ResourceLoad { name: String, #[source] inner: resource_manager::Error },
+    #[error("Can not determine shader type for resource {}", name)]
     CanNotDetermineShaderTypeForResource { name: String },
 }
 

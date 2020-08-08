@@ -4,9 +4,9 @@ use std::mem::size_of;
 use std::slice::from_raw_parts;
 use crate::uniform_buffer::{UniformBlock};
 use crate::Program;
-use failure::_core::marker::PhantomData;
 use std::sync::Arc;
 use crate::texture::{TextureType, ResidentBindlessTexture};
+use std::marker::PhantomData;
 
 fn to_byte_slice<'a, T>(data: &'a [T]) -> &'a [u8] {
     unsafe {

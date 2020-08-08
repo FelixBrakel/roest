@@ -1,4 +1,3 @@
-use failure::err_msg;
 use nalgebra as na;
 mod core_systems;
 mod core_components;
@@ -6,14 +5,19 @@ mod core_components;
 pub mod core_resources;
 use legion::prelude::*;
 
+use anyhow::{
+    Result,
+    anyhow
+};
+
 use gl_renderer::{
     Viewport,
     ColorBuffer,
     vertex,
     GPUVariant,
+    light::*,
     data::matrix_data::{mat3, mat4},
     data::vector_data,
-    light::*,
     uniform_buffer::InterfaceBlock,
     texture::{
         Texture,
@@ -39,95 +43,19 @@ use core_components::{
     Transform
 };
 
+use core_resources::{
+    gpu_blocks::*,
+};
 
 use image::GenericImageView;
 
-#[derive(GPUVariant, Default)]
-pub struct Lights {
-    directional: DirectionalLight,
-    point_lights: [PointLight; 16],
-    spot_lights: [SpotLight; 16],
-
-    num_point_lights: vector_data::i32_,
-    num_spot_lights: vector_data::i32_
+fn main() -> Result<()> {
+    run()
 }
 
-#[derive(GPUVariant)]
-pub struct Matrices {
-    mvp: mat4,
-    mv: mat4,
-    m: mat4,
-    v: mat4,
-    p: mat4,
-    n: mat3
-}
-
-impl Matrices {
-    pub fn new(mvp: mat4, mv: mat4, m: mat4, v: mat4, p: mat4, n: mat3) -> Self {
-        Matrices { mvp, mv, m, v, p, n }
-    }
-}
-
-pub enum LightsError {
-    MaxPointLightsReached,
-    PointLightIdxOutOfBounds,
-    MaxSpotLightsReached,
-    SpotLightIdxOutOfBounds,
-}
-
-impl Lights {
-    pub fn add_point_light(&mut self, light: PointLight) -> Result<(), LightsError> {
-        if self.num_point_lights.d0 > 16 {
-            return Err(LightsError::MaxPointLightsReached);
-        }
-
-        self.point_lights[self.num_point_lights.d0 as usize] = light;
-        self.num_point_lights.d0 += 1;
-
-        Ok(())
-    }
-
-    pub fn set_point_light(&mut self, idx: usize, light: PointLight) -> Result<(), LightsError> {
-        if idx >= self.num_point_lights.d0 as usize {
-            return Err(LightsError::PointLightIdxOutOfBounds);
-        }
-
-        self.point_lights[idx] = light;
-
-        Ok(())
-    }
-
-    pub fn add_spot_light(&mut self, light: SpotLight) -> Result<(), LightsError> {
-        if self.num_spot_lights.d0 > 16 {
-            return Err(LightsError::MaxSpotLightsReached);
-        }
-
-        self.spot_lights[self.num_spot_lights.d0 as usize] = light;
-        self.num_spot_lights.d0 += 1;
-
-        Ok(())
-    }
-
-    pub fn set_spot_light(&mut self, idx: usize, light: SpotLight) -> Result<(), LightsError> {
-        if idx >= self.num_spot_lights.d0 as usize {
-            return Err(LightsError::SpotLightIdxOutOfBounds);
-        }
-
-        self.spot_lights[idx] = light;
-
-        Ok(())
-    }
-}
-
-fn main() {
-    if let Err(e) = run() {
-        println!("{}", failure_to_string(e));
-    }
-}
-
-fn run() -> Result<(), failure::Error> {
-    let sdl = sdl2::init().map_err(err_msg)?;
-    let video_subsystem = sdl.video().map_err(err_msg)?;
+fn run() -> Result<(), anyhow::Error> {
+    let sdl = sdl2::init().map_err(|err|anyhow!(err))?;
+    let video_subsystem = sdl.video().map_err(|err|anyhow!(err))?;
     let gl_attr = video_subsystem.gl_attr();
     gl_attr.set_context_profile(sdl2::video::GLProfile::Core);
     gl_attr.set_context_version(4, 5);
@@ -138,7 +66,7 @@ fn run() -> Result<(), failure::Error> {
         .build()
         .unwrap();
 
-    let _gl_context = window.gl_create_context().map_err(err_msg)?;
+    let _gl_context = window.gl_create_context().map_err(|err|anyhow!(err))?;
     gl::load_with(
         |s| video_subsystem.gl_get_proc_address(s) as *const std::os::raw::c_void
     );
@@ -175,13 +103,13 @@ fn run() -> Result<(), failure::Error> {
         100.
     );
 
-    let program = ProgramLoader::new().load("core_resources/shaders/basic").unwrap();
+    let program = ProgramLoader::new().load("resources/shaders/basic").unwrap();
     let lights_block = InterfaceBlock::<Lights>::new(&program, "Lights", 1);
     let matrices_block = InterfaceBlock::<Matrices>::new(&program, "Matrices", 2);
 
     let teapot_loader: IndexedMeshLoader<vertex::BasicVertex> = IndexedMeshLoader::new();
 
-    let img = ImageLoader::new().load("core_resources/textures/penguin.png").unwrap();
+    let img = ImageLoader::new().load("resources/textures/penguin.png").unwrap();
 
     let tex = Texture::<Texture2D>::new(
         TexWrapMode::Repeat,
@@ -209,16 +137,18 @@ fn run() -> Result<(), failure::Error> {
     color_buffer.set_used();
 
     let renderer = core_systems::RendererSystem::system();
-    world.resources.insert(program);
-    world.resources.insert(lights_block);
-    world.resources.insert(matrices_block);
-    world.resources.insert(material_block);
+
+    let mut resources = Resources::default();
+    resources.insert(program);
+    resources.insert(lights_block);
+    resources.insert(matrices_block);
+    resources.insert(material_block);
 
     let entity = vec![
         (
             transform,
             penguin_material,
-            teapot_loader.load("core_resources/meshes/penguin.mesh").unwrap()
+            teapot_loader.load("resources/meshes/penguin.mesh").unwrap()
         )
     ];
 
@@ -286,8 +216,11 @@ fn run() -> Result<(), failure::Error> {
         (0..1).map(|_| (camera,))
     );
 
+    let mut schedule = Schedule::builder()
+        .add_thread_local(renderer)
+        .build();
 
-    let mut event_pump = sdl.event_pump().map_err(err_msg)?;
+    let mut event_pump = sdl.event_pump().map_err(|err|anyhow!(err))?;
     'main: loop {
         for event in event_pump.poll_iter() {
             match event {
@@ -299,7 +232,7 @@ fn run() -> Result<(), failure::Error> {
                     viewport.update_size(w, h);
                     let cam_query = <(Write<core_components::Camera>,)>::query();
 
-                    for (mut camera,) in cam_query.iter(&mut world) {
+                    for (mut camera,) in cam_query.iter_mut(&mut world) {
                         camera.update_perspective(
                             60.,
                             viewport.w as f32 / viewport.h as f32,
@@ -315,45 +248,14 @@ fn run() -> Result<(), failure::Error> {
         }
         let query = <(Write<core_components::Transform>, Read<core_components::IndexedMesh>)>::query();
 
-        for (mut transform, _) in query.iter(&mut world) {
-            transform.rotate(0., 0.01, 0.);
+        for (mut transform, _) in query.iter_mut(&mut world) {
+            transform.rotate_by(0., 0.01, 0.);
         }
 
         color_buffer.clear();
-        renderer.run(&world);
+        schedule.execute(&mut world, &mut resources);
         window.gl_swap_window();
     }
 
     Ok(())
-}
-
-pub fn failure_to_string(e: failure::Error) -> String {
-    use std::fmt::Write;
-
-    let mut result = String::new();
-    for (i, cause) in e
-        .iter_chain()
-        .collect::<Vec<_>>()
-        .into_iter()
-        .rev()
-        .enumerate()
-    {
-        if i > 0 {
-            let _ = writeln!(&mut result, "  Which caused the following issue:");
-        }
-
-        let _ = write!(&mut result, "{}", cause);
-        if let Some(backtrace) = cause.backtrace() {
-            let bracktrace_str = format!("{}", backtrace);
-            if bracktrace_str.len() > 0 {
-                let _ = writeln!(&mut result,  " This happened at {}", backtrace);
-            } else {
-                let _ = writeln!(&mut result);
-            }
-        } else {
-            let _ = writeln!(&mut result);
-        }
-    }
-
-    result
 }

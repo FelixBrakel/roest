@@ -1,11 +1,11 @@
 use gl;
 use super::{Shader};
-use failure::Fail;
+use thiserror::Error;
 use super::{create_initialized_cstring};
 
-#[derive(Debug, Fail)]
+#[derive(Debug, Error)]
 pub enum Error {
-    #[fail(display = "Failed to link program: {}", message)]
+    #[error("Failed to link program: {}", message)]
     LinkError { message: String },
 }
 

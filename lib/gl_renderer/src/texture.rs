@@ -1,8 +1,8 @@
 use std::marker::PhantomData;
 use crate::data::vector_data::f32_f32_f32_f32;
-use failure::_core::ffi::c_void;
 use crate::GPUVariant;
 use crate::buffered_uniform_struct_shared::{GPUTexture, GPUTextureArray};
+use std::ffi::c_void;
 
 pub enum TexWrapMode {
     ClampToBorder = gl::CLAMP_TO_BORDER as isize,

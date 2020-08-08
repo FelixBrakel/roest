@@ -2,16 +2,16 @@ use gl_renderer::{IndexedVertArray, VertexAttribPointers};
 use crate::core_systems::resource_manager;
 use crate::core_systems::resource_manager::{Loader, open_file};
 use std::path::Path;
-use failure::Fail;
-use failure::_core::marker::PhantomData;
+use thiserror::Error;
 use serde::de::DeserializeOwned;
+use std::marker::PhantomData;
 
-#[derive(Fail, Debug)]
+#[derive(Debug, Error)]
 pub enum Error {
-    #[fail(display = "Deserializer error")]
-    Deserializer(#[cause] bincode::Error),
-    #[fail(display = "Failed to load resource {}", name)]
-    ResourceLoad { name: String, #[cause] inner: resource_manager::Error },
+    #[error("Deserializer error")]
+    Deserializer(#[source] bincode::Error),
+    #[error("Failed to load resource {}", name)]
+    ResourceLoad { name: String, #[source] inner: resource_manager::Error },
 }
 
 pub struct IndexedVertArrayLoader<V> {

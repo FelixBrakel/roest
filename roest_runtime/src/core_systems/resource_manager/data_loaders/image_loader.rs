@@ -1,19 +1,17 @@
-use std::marker::PhantomData;
-use gl_renderer::texture::{TextureType, Texture, TexWrapMode, TexMinFilterMode, TexMagFilterMode, Texture2D};
 use std::path::Path;
 use crate::core_systems::resource_manager::{Loader, file_name_to_path, Error as ResError};
 use image::{DynamicImage, ImageError};
-use failure::Fail;
+use thiserror::Error;
 
 pub struct ImageLoader {
 }
 
-#[derive(Debug, Fail)]
+#[derive(Debug, Error)]
 pub enum Error {
-    #[fail(display = "ImageError")]
-    Image{#[cause] inner: ImageError},
-    #[fail(display = "Failed to load resource {}", name)]
-    ResourceLoad{name: String, #[cause] inner: ResError}
+    #[error("ImageError")]
+    Image{#[source] inner: ImageError},
+    #[error("Failed to load resource {}", name)]
+    ResourceLoad{name: String, #[source] inner: ResError}
 }
 
 impl ImageLoader {

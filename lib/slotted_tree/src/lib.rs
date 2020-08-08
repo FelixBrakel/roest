@@ -67,18 +67,21 @@ impl<T: Copy> Tree<T> {
         Ok(idx)
     }
 
-    pub fn remove_tree(&mut self, node: TreeKey) {
+    pub fn remove_tree(&mut self, node: TreeKey) -> Vec<Option<T>> {
+        let mut out = Vec::new();
+        out.push(self.values.remove(node));
         let tree = match self.children.get(node) {
             Some(t) => t.clone(),
-            None => return
+            None => return out
         };
 
         for t in tree {
-            self.remove_tree(t);
+            out.extend(self.remove_tree(t));
         }
 
-        self.values.remove(node);
         self.children.remove(node);
+
+        out
     }
 
     /// Maps the tree to a SecondaryTree in which all the keys from the current tree are still valid

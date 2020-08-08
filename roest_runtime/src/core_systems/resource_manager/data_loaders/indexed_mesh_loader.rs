@@ -2,15 +2,15 @@ use gl_renderer::{VertexAttribPointers, IndexedVertArray};
 use crate::core_components::IndexedMesh;
 use crate::core_systems::resource_manager::{Loader};
 use std::path::Path;
-use failure::Fail;
+use thiserror::Error;
 use super::{IndexedVertArrayLoader, IVertArrLoaderError};
-use failure::_core::marker::PhantomData;
 use serde::de::DeserializeOwned;
+use std::marker::PhantomData;
 
-#[derive(Fail, Debug)]
+#[derive(Debug, Error)]
 pub enum Error {
-    #[fail(display = "Indexed Vertex Array Loader error")]
-    IndexedVertArrayLoader(#[cause] IVertArrLoaderError),
+    #[error("Indexed Vertex Array Loader error")]
+    IndexedVertArrayLoader(#[source] IVertArrLoaderError),
 }
 
 pub struct IndexedMeshLoader<V> {

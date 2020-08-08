@@ -12,17 +12,18 @@ gl = { path = "../lib/gl" }
 gl_renderer = { path = "../lib/gl_renderer" }
 renderer_derive = { path = "../lib/renderer_derive" }
 roefs = { path = "../lib/roefs" }
-sdl2 = "0.32.2"
+sdl2 = "0.34.2"
 lazy_static = "1.4.0"
-failure = "0.1.7"
-nalgebra = "0.20.0"
+nalgebra = "0.21.1"
 serde = "1.0.106"
 bincode = "1.2.1"
-legion = "0.2.2"
+legion = "0.2.4"
 approx = "0.3.2"
 image = "0.23.4"
 uuid = { version = "0.8.1", default-features = false, features = [ "v4" ] }
 slotted_tree = { path = "../lib/slotted_tree" }
+thiserror = "1.0.20"
+anyhow = "1.0.32"
 
 [build-dependencies]
 walkdir = "2.2.9"

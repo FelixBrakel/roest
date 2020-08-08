@@ -1,12 +1,12 @@
-use failure::Fail;
+use thiserror::Error;
 use std::io;
 
 pub mod synchronous;
 
-#[derive(Debug, Fail)]
+#[derive(Debug, Error)]
 pub enum Error {
-    #[fail(display = "I/O error")]
-    Io(#[cause] io::Error),
+    #[error("I/O error")]
+    Io(#[source] io::Error),
 }
 
 impl From<io::Error> for Error {
