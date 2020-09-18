@@ -16,9 +16,9 @@ use crate::EditorWorld;
 use legion::prelude::*;
 
 impl EditorComponent for Transform {
-    fn as_component_representation(&self) -> ComponentRepresentation {
-        let insert_func = |world: &mut World, entity| {
-            world.add_component(entity, Transform::from_defaults()).unwrap();
+    fn component_representation() -> ComponentRepresentation {
+        let insert_func = |world: &mut EditorWorld, entity| {
+            world.add_component(entity, Transform::default()).unwrap();
         };
 
         let ui_func = |world: Rc<RefCell<EditorWorld>>, entity: Entity, paned: &gtk::Paned| {
@@ -50,6 +50,8 @@ impl EditorComponent for Transform {
 
                 let rot = component.rotation().euler_angles();
 
+                // We display in degrees so we need to convert. This needs to happen the other way around when setting
+                // the values.
                 rot_x.set_value((rot.0 * 57.295779513) as f64);
                 rot_y.set_value((rot.1 * 57.295779513) as f64);
                 rot_z.set_value((rot.2 * 57.295779513) as f64);
@@ -68,7 +70,7 @@ impl EditorComponent for Transform {
                     .world
                     .get_component_mut::<Transform>(entity)
                     .unwrap()
-                    .translate_x(val as f32);
+                    .position_x(val as f32);
             }));
             pos_y.connect_value_changed(clone!(@strong world => move |spin_button| {
                 let val = spin_button.get_value();
@@ -77,7 +79,7 @@ impl EditorComponent for Transform {
                     .world
                     .get_component_mut::<Transform>(entity)
                     .unwrap()
-                    .translate_y(val as f32);
+                    .position_y(val as f32);
             }));
             pos_z.connect_value_changed(clone!(@strong world => move |spin_button| {
                 let val = spin_button.get_value();
@@ -86,35 +88,54 @@ impl EditorComponent for Transform {
                     .world
                     .get_component_mut::<Transform>(entity)
                     .unwrap()
-                    .translate_z(val as f32);
+                    .position_z(val as f32);
             }));
 
-            rot_x.connect_value_changed(clone!(@strong world => move |spin_button| {
-                let val = spin_button.get_value();
+            rot_x.connect_value_changed(clone!(@strong world, @strong rot_y, @strong rot_z => move |spin_button| {
+                let x = spin_button.get_value();
+                let y = rot_y.get_value();
+                let z = rot_z.get_value();
+
                 world
                     .borrow_mut()
                     .world
                     .get_component_mut::<Transform>(entity)
                     .unwrap()
-                    .rotation_x(val as f32);
+                    .set_rotation(
+                        x as f32 * 0.01745329252_f32,
+                        y as f32 * 0.01745329252_f32,
+                        z as f32 * 0.01745329252_f32
+                    );
             }));
-            rot_y.connect_value_changed(clone!(@strong world => move |spin_button| {
-                let val = spin_button.get_value();
+            rot_y.connect_value_changed(clone!(@strong world, @strong rot_x, @strong rot_z => move |spin_button| {
+                let x = rot_x.get_value();
+                let y = spin_button.get_value();
+                let z = rot_z.get_value();
                 world
                     .borrow_mut()
                     .world
                     .get_component_mut::<Transform>(entity)
                     .unwrap()
-                    .rotation_y(val as f32);
+                    .set_rotation(
+                        x as f32 * 0.01745329252_f32,
+                        y as f32 * 0.01745329252_f32,
+                        z as f32 * 0.01745329252_f32
+                    );
             }));
-            rot_z.connect_value_changed(clone!(@strong world => move |spin_button| {
-                let val = spin_button.get_value();
+            rot_z.connect_value_changed(clone!(@strong world, @strong rot_x, @strong rot_y => move |spin_button| {
+                let x = rot_x.get_value();
+                let y = rot_y.get_value();
+                let z = spin_button.get_value();
                 world
                     .borrow_mut()
                     .world
                     .get_component_mut::<Transform>(entity)
                     .unwrap()
-                    .rotation_z(val as f32);
+                    .set_rotation(
+                        x as f32 * 0.01745329252_f32,
+                        y as f32 * 0.01745329252_f32,
+                        z as f32 * 0.01745329252_f32
+                    );
             }));
 
             scale_x.connect_value_changed(clone!(@strong world => move |spin_button| {

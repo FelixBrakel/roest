@@ -1,7 +1,6 @@
 use legion::{
     storage::{Component},
     prelude::{
-        World,
         Entity
     }
 };
@@ -13,12 +12,12 @@ use crate::EditorWorld;
 
 pub struct ComponentRepresentation {
     name: String,
-    insert_func: fn(&mut World, Entity),
+    insert_func: fn(&mut EditorWorld, Entity),
     ui_func: fn(Rc<RefCell<EditorWorld>>, Entity, &Paned)
 }
 
 impl ComponentRepresentation {
-    pub fn new(name: String, insert_func: fn(&mut World, Entity), ui_func: fn(Rc<RefCell<EditorWorld>>, Entity, &Paned)) -> ComponentRepresentation {
+    pub fn new(name: String, insert_func: fn(&mut EditorWorld, Entity), ui_func: fn(Rc<RefCell<EditorWorld>>, Entity, &Paned)) -> ComponentRepresentation {
         ComponentRepresentation {
             name,
             insert_func,
@@ -33,10 +32,13 @@ impl ComponentRepresentation {
     pub fn ui_func(&self) -> fn(Rc<RefCell<EditorWorld>>, Entity, &Paned) {
         self.ui_func
     }
+
+    pub fn insert_func(&self) -> fn(&mut EditorWorld, Entity) {
+        self.insert_func
+    }
+
 }
 
 pub trait EditorComponent: Component {
-    fn as_component_representation(&self) -> ComponentRepresentation;
-    // fn insert_func() -> Box<dyn Fn(World, Entity)>;
-    // fn attach_ui(&self, paned: &gtk::Paned);
+    fn component_representation() -> ComponentRepresentation;
 }

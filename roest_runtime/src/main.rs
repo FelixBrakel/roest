@@ -15,7 +15,6 @@ use gl_renderer::{
     ColorBuffer,
     vertex,
     GPUVariant,
-    light::*,
     data::matrix_data::{mat3, mat4},
     data::vector_data,
     uniform_buffer::InterfaceBlock,
@@ -40,7 +39,8 @@ use core_systems::resource_manager::{
 };
 
 use core_components::{
-    Transform
+    Transform,
+    light::PointLight
 };
 
 use core_resources::{
@@ -87,20 +87,6 @@ fn run() -> Result<(), anyhow::Error> {
         1.,
         na::Vector3::new(0., 0., -2.),
         na::UnitQuaternion::from_euler_angles(0.2, 0., 0.),
-    );
-
-    let cam_rot = mat3::new(
-        1., 0., 0.,
-        0., 1., 0.,
-        0., 0., 1.
-    );
-    let camera = core_components::Camera::from_fov(
-        (0., 0., 0.).into(),
-        cam_rot,
-        60.,
-        viewport.w as f32 / viewport.h as f32,
-        0.1,
-        100.
     );
 
     let program = ProgramLoader::new().load("resources/shaders/basic").unwrap();
@@ -161,15 +147,14 @@ fn run() -> Result<(), anyhow::Error> {
         (),
         (0..1).map(
             |i| (
-                Transform::new(1., na::Vector3::new(-1., 0., -1.2), na::UnitQuaternion::from_euler_angles(0., 0., 0.)),
+                Transform::new(1., na::Vector3::new(-1., 0.5, -1.2), na::UnitQuaternion::from_euler_angles(0., 0., 0.)),
                 PointLight {
-                    position: (0., 0., 0.).into(),
-                    constant: (1.).into(),
-                    linear: (0.35).into(),
-                    quadratic: (0.44).into(),
-                    ambient: (0.2, 0.2, 0.2).into(),
-                    diffuse: (0.7, 0.7, 0.7).into(),
-                    specular: (1.0, 1.0, 1.0).into()
+                    constant: 1.,
+                    linear: 0.35,
+                    quadratic: 0.44,
+                    ambient: na::Vector3::new(0.2, 0.2, 0.2),
+                    diffuse: na::Vector3::new(0.662, 0.450, 0.137),
+                    specular: na::Vector3::new(1.0, 1.0, 1.0)
                 }
                 )
         )
@@ -181,13 +166,12 @@ fn run() -> Result<(), anyhow::Error> {
             |i| (
                 Transform::new(1., na::Vector3::new(1., 0., -1.2), na::UnitQuaternion::from_euler_angles(0., 0., 0.)),
                 PointLight {
-                    position: (0., 0., 0.).into(),
-                    constant: (1.).into(),
-                    linear: (0.35).into(),
-                    quadratic: (0.44).into(),
-                    ambient: (0.2, 0.2, 0.2).into(),
-                    diffuse: (0.8, 0.8, 0.85).into(),
-                    specular: (1.0, 1.0, 1.0).into()
+                    constant: 1.,
+                    linear: 0.35,
+                    quadratic: 0.44,
+                    ambient: na::Vector3::new(0.2, 0.2, 0.2),
+                    diffuse: na::Vector3::new(0.266, 0.470, 0.678),
+                    specular: na::Vector3::new(1.0, 1.0, 1.0)
                 }
             )
         )
@@ -211,9 +195,22 @@ fn run() -> Result<(), anyhow::Error> {
     //     )
     // );
 
+    let camera = core_components::Camera::from_fov(
+        60.,
+        viewport.w as f32 / viewport.h as f32,
+        0.1,
+        100.
+    );
+
+    let cam_transform = Transform::new(
+        1.,
+        na::Vector3::new(0., 0., 0.),
+        na::UnitQuaternion::from_euler_angles(0., 0., 0.)
+    );
+
     world.insert(
         (),
-        (0..1).map(|_| (camera,))
+        (0..1).map(|_| (camera, cam_transform))
     );
 
     let mut schedule = Schedule::builder()

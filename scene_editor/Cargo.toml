@@ -33,3 +33,7 @@ features = ["v2_64"]
 [dependencies.glib]
 version = "0.10.1"
 features = ["v2_64"]
+
+[dependencies.gdk]
+version = "0.13.1"
+features = ["v3_24"]

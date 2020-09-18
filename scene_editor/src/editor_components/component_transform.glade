@@ -5,19 +5,19 @@
   <object class="GtkAdjustment" id="pos_x_val">
     <property name="lower">-100000</property>
     <property name="upper">100000</property>
-    <property name="step_increment">1</property>
+    <property name="step_increment">0.05</property>
     <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="pos_y_val">
     <property name="lower">-100000</property>
     <property name="upper">100000</property>
-    <property name="step_increment">1</property>
+    <property name="step_increment">0.05</property>
     <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="pos_z_val">
     <property name="lower">-100000</property>
     <property name="upper">100000</property>
-    <property name="step_increment">1</property>
+    <property name="step_increment">0.05</property>
     <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="rot_x_val">

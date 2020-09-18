@@ -1,4 +1,5 @@
-pub mod camera;
+pub mod light;
+mod camera;
 mod transform;
 mod indexed_mesh;
 

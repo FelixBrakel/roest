@@ -9,7 +9,6 @@ edition = "2018"
 [dependencies]
 tobj = "0.1.11"
 clap = {version = "~2.33.0", features = ["yaml"]}
-roest_runtime = { path = "../../roest_runtime"}
 gl_renderer = { path = "../../lib/gl_renderer" }
 serde = "1.0.105"
 bincode = "1.2.1"

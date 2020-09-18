@@ -41,7 +41,6 @@ impl GlUniform for IMeshDefaults {
             matrix_data::mat4::from_gl_uniform(&program, 4)
         };
 
-
         IMeshDefaults { mvp, mv, m, v, p }
     }
 }
@@ -94,7 +93,6 @@ pub struct IndexedMesh {
 impl IndexedMesh {
     pub fn new<V: VertexAttribPointers>(verts: &IndexedVertArray<V>) -> IndexedMesh {
         let vertex_vbo = buffer::ArrayBuffer::new();
-
         vertex_vbo.bind();
         vertex_vbo.static_draw_data(&verts.vertices);
         vertex_vbo.unbind();

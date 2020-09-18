@@ -4,13 +4,14 @@ use crate::core_components::{
     Camera,
     Transform,
     material,
+    light::PointLight
 };
 use crate::core_resources::gpu_blocks::{Lights, Matrices};
 use gl_renderer::{Program, GPUAggregate};
 use gl_renderer::uniform_buffer::InterfaceBlock;
 use nalgebra::{U3};
 use nalgebra as na;
-use gl_renderer::light::PointLight;
+use gl_renderer::light::PointLight as GPUPointLight;
 
 pub struct RendererSystem { }
 
@@ -20,34 +21,36 @@ impl RendererSystem {
             .read_resource::<Program>()
             .read_resource::<InterfaceBlock<Lights>>()
             .read_resource::<InterfaceBlock<Matrices>>()
-            .read_resource::<InterfaceBlock<material::TexturedBasic>>()
-            .with_query(Read::<Camera>::query())
-            .with_query(<(Read<Transform>, Read<material::TexturedBasic>, Read<IndexedMesh>)>::query())
+            .read_resource::<InterfaceBlock<material::Basic>>()
+            .with_query(<(Read<Transform>, Read::<Camera>)>::query())
+            .with_query(<(Read<Transform>, Read<material::Basic>, Read<IndexedMesh>)>::query())
             .with_query(<(Read<Transform>, Read<PointLight>)>::query())
             .read_component::<Camera>() // This
             .build_thread_local( move |_, world, resource, (cam_query, mesh_query, light_query)| {
                 let (program, gpu_lights, gpu_matrices, gpu_material) = resource;
 
-                for camera in cam_query.iter(world) {
-                    let vp = camera.perspective * camera.view;
-                    gpu_matrices.uniform_struct.v.set(&camera.view);
-                    gpu_matrices.uniform_struct.p.set(&camera.perspective);
+                for (cam_transform, camera) in cam_query.iter(world) {
+                    let view_matrix = match cam_transform.model().try_inverse() {
+                        Some(matrix) => matrix,
+                        None => panic!("Camera transform matrix is not invertible!")
+                    };
+                    let vp = camera.perspective() * view_matrix;
+                    gpu_matrices.uniform_struct.v.set(&view_matrix);
+                    gpu_matrices.uniform_struct.p.set(camera.perspective());
 
 
                     let mut lights = Lights::default();
                     for (transform, point_light) in light_query.iter(world) {
-                        let mut light = (*point_light).clone();
-                        let pos_vec = na::Vector4::new(
-                            light.position.d0,
-                            light.position.d1,
-                            light.position.d2,
-                            1.
+                        let pos_vec = view_matrix * transform.model() * na::Vector4::new(0., 0., 0., 1.);
+                        let light = GPUPointLight::new(
+                            (pos_vec[0], pos_vec[1], pos_vec[2]).into(),
+                            point_light.constant.into(),
+                            point_light.linear.into(),
+                            point_light.quadratic.into(),
+                            (point_light.ambient[0], point_light.ambient[1], point_light.ambient[2]).into(),
+                            (point_light.diffuse[0], point_light.diffuse[1], point_light.diffuse[2]).into(),
+                            (point_light.specular[0], point_light.specular[1], point_light.specular[2]).into()
                         );
-                        let new_pos_vec = camera.view * transform.model() * pos_vec;
-
-                        light.position.d0 = new_pos_vec[0];
-                        light.position.d1 = new_pos_vec[1];
-                        light.position.d2 = new_pos_vec[2];
 
                         match lights.add_point_light(light) {
                             Ok(_) => (),
@@ -62,7 +65,7 @@ impl RendererSystem {
                     for (mesh_transform, material, mesh) in mesh_query.iter(world) {
                         let model: na::Matrix4<f32> = mesh_transform.model();
                         let mvp = vp * model;
-                        let mv = camera.view * model;
+                        let mv = view_matrix * model;
 
                         gpu_matrices.uniform_struct.mvp.set(&mvp);
                         // gpu_matrices.uniform_struct.mvp.set(&na::Matrix4::identity());

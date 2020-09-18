@@ -11,10 +11,15 @@ use nalgebra as na;
 use roest_runtime::{
     core_resources::{
         scene_graph::SceneGraph,
+        gpu_blocks::{
+            Lights,
+            Matrices
+        }
     },
     core_components,
     core_systems::{
         renderer::RendererSystem,
+        resource_manager::data_loaders::ProgramLoader
     }
 };
 
@@ -31,20 +36,18 @@ use editor_components::{
 
 use gtk::prelude::*;
 
-use glib::{
-    subclass::prelude::*,
-    clone,
-    GBoxed
-};
-use gtk::{TreeStore, TreeIter, TreeView, Builder};
+use glib::{subclass::prelude::*, clone, GBoxed};
+use gtk::{TreeStore, TreeIter, TreeView, Builder, FrameClass};
+use gdk::FrameClock;
 
 use gl_renderer::{
     Viewport,
     ColorBuffer,
+    uniform_buffer::InterfaceBlock
 };
 
 use shared_library::dynamic_library::DynamicLibrary;
-use roest_runtime::core_components::Transform;
+use roest_runtime::core_systems::resource_manager::Loader;
 
 pub struct ComponentVisualization {
     components: Vec<ComponentRepresentation>
@@ -63,13 +66,13 @@ impl EditorWorld {
     pub fn new(mut world: World) -> Self {
 
         let comp_vis = ComponentVisualization {
-            components: vec![Empty.as_component_representation()]
+            components: Vec::new()
         };
 
         let root_entity = world.insert(
             (Root,),
             iter::once(
-                (Empty, comp_vis)
+                (comp_vis,)
             )
         )[0];
 
@@ -112,10 +115,9 @@ impl EditorWorld {
     where
         T: EditorComponent
     {
-        {
+        if !self.world.has_component::<T>(entity) {
             let mut vis_comp = self.world.get_component_mut::<ComponentVisualization>(entity).unwrap();
-
-            vis_comp.components.push(component.as_component_representation());
+            vis_comp.components.push(T::component_representation());
         }
         self.world.add_component(entity, component)
     }
@@ -157,216 +159,25 @@ impl EditorWorld {
     }
 }
 
-pub struct Empty;
-
-impl EditorComponent for Empty {
-    fn as_component_representation(&self) -> ComponentRepresentation {
-        let insert_func = |world: &mut World, entity: Entity| {
-            world.add_component(entity, Empty).unwrap();
-        };
-
-        let ui_func = |_: Rc<RefCell<EditorWorld>>, _: Entity, _: &gtk::Paned| {};
-
-        ComponentRepresentation::new("Empty".to_string(), insert_func, ui_func)
-    }
-}
-
-pub struct ChildComponent(u32);
-
-impl ChildComponent {
-    fn attach_ui(&self, paned: &gtk::Paned) {
-        let src = include_str!("editor_components/component_transform.glade");
-        let builder = gtk::Builder::from_string(src);
-
-        let grid: gtk::Frame = builder.get_object("transform_frame").unwrap();
-
-        paned.add2(&grid);
-        paned.set_child_shrink(&grid, false)
-
-        // connect signals, set values.
-    }
-}
-
-impl EditorComponent for ChildComponent {
-    fn as_component_representation(&self) -> ComponentRepresentation {
-        let insert_func = |world: &mut World, entity| {
-            world.add_component(entity, ChildComponent(0)).unwrap();
-        };
-
-        let ui_func = |world: Rc<RefCell<EditorWorld>>, entity: Entity, paned: &gtk::Paned| {
-            world.borrow().world.get_component::<ChildComponent>(entity).unwrap().attach_ui(paned);
-        };
-
-        ComponentRepresentation::new(format!("Child {}", self.0), insert_func, ui_func)
-    }
-}
-
-// impl EditorComponent for Transform {
-//     fn as_component_representation(&self) -> ComponentRepresentation {
-//         let insert_func = |world: &mut World, entity| {
-//             world.add_component(entity, Transform::from_defaults()).unwrap();
-//         };
-//
-//         let ui_func = |world: Rc<RefCell<EditorWorld>>, entity: Entity, paned: &gtk::Paned| {
-//             let src = include_str!("component_transform.glade");
-//             let builder = gtk::Builder::from_string(src);
-//
-//             let grid: gtk::Frame = builder.get_object("transform_frame").unwrap();
-//
-//             let pos_x: gtk::SpinButton = builder.get_object("pos_x").unwrap();
-//             let pos_y: gtk::SpinButton = builder.get_object("pos_y").unwrap();
-//             let pos_z: gtk::SpinButton = builder.get_object("pos_z").unwrap();
-//
-//             let rot_x: gtk::SpinButton = builder.get_object("rot_x").unwrap();
-//             let rot_y: gtk::SpinButton = builder.get_object("rot_y").unwrap();
-//             let rot_z: gtk::SpinButton = builder.get_object("rot_z").unwrap();
-//
-//             let scale_x: gtk::SpinButton = builder.get_object("scale_x").unwrap();
-//             let scale_y: gtk::SpinButton = builder.get_object("scale_y").unwrap();
-//             let scale_z: gtk::SpinButton = builder.get_object("scale_z").unwrap();
-//
-//             {
-//                 let w = world.borrow();
-//                 let component = w.world.get_component::<Transform>(entity).unwrap();
-//                 let pos = component.translation();
-//
-//                 pos_x.set_value(pos.x as f64);
-//                 pos_y.set_value(pos.y as f64);
-//                 pos_z.set_value(pos.z as f64);
-//
-//                 let rot = component.rotation().euler_angles();
-//
-//                 rot_x.set_value(rot.0 as f64);
-//                 rot_y.set_value(rot.1 as f64);
-//                 rot_z.set_value(rot.2 as f64);
-//
-//                 let scale = component.scale();
-//
-//                 scale_x.set_value(scale.x as f64);
-//                 scale_y.set_value(scale.y as f64);
-//                 scale_z.set_value(scale.z as f64);
-//             }
-//
-//             pos_x.connect_value_changed(clone!(@strong world => move |spin_button| {
-//                 let val = spin_button.get_value();
-//                 world
-//                     .borrow_mut()
-//                     .world
-//                     .get_component_mut::<Transform>(entity)
-//                     .unwrap()
-//                     .translate_x(val as f32);
-//             }));
-//             pos_y.connect_value_changed(clone!(@strong world => move |spin_button| {
-//                 let val = spin_button.get_value();
-//                 world
-//                     .borrow_mut()
-//                     .world
-//                     .get_component_mut::<Transform>(entity)
-//                     .unwrap()
-//                     .translate_y(val as f32);
-//             }));
-//             pos_z.connect_value_changed(clone!(@strong world => move |spin_button| {
-//                 let val = spin_button.get_value();
-//                 world
-//                     .borrow_mut()
-//                     .world
-//                     .get_component_mut::<Transform>(entity)
-//                     .unwrap()
-//                     .translate_z(val as f32);
-//             }));
-//
-//             rot_x.connect_value_changed(clone!(@strong world => move |spin_button| {
-//                 let val = spin_button.get_value();
-//                 world
-//                     .borrow_mut()
-//                     .world
-//                     .get_component_mut::<Transform>(entity)
-//                     .unwrap()
-//                     .rotation_x(val as f32);
-//             }));
-//             rot_y.connect_value_changed(clone!(@strong world => move |spin_button| {
-//                 let val = spin_button.get_value();
-//                 world
-//                     .borrow_mut()
-//                     .world
-//                     .get_component_mut::<Transform>(entity)
-//                     .unwrap()
-//                     .rotation_y(val as f32);
-//             }));
-//             rot_z.connect_value_changed(clone!(@strong world => move |spin_button| {
-//                 let val = spin_button.get_value();
-//                 world
-//                     .borrow_mut()
-//                     .world
-//                     .get_component_mut::<Transform>(entity)
-//                     .unwrap()
-//                     .rotation_z(val as f32);
-//             }));
-//
-//             scale_x.connect_value_changed(clone!(@strong world => move |spin_button| {
-//                 let val = spin_button.get_value();
-//                 world
-//                     .borrow_mut()
-//                     .world
-//                     .get_component_mut::<Transform>(entity)
-//                     .unwrap()
-//                     .scale_x(val as f32);
-//             }));
-//             scale_y.connect_value_changed(clone!(@strong world => move |spin_button| {
-//                 let val = spin_button.get_value();
-//                 world
-//                     .borrow_mut()
-//                     .world
-//                     .get_component_mut::<Transform>(entity)
-//                     .unwrap()
-//                     .scale_y(val as f32);
-//             }));
-//             scale_z.connect_value_changed(clone!(@strong world => move |spin_button| {
-//                 let val = spin_button.get_value();
-//                 world
-//                     .borrow_mut()
-//                     .world
-//                     .get_component_mut::<Transform>(entity)
-//                     .unwrap()
-//                     .scale_z(val as f32);
-//             }));
-//
-//             paned.add2(&grid);
-//             paned.set_child_shrink(&grid, false)
-//         };
-//
-//
-//         ComponentRepresentation::new("Transform".to_string(), insert_func, ui_func)
-//     }
-// }
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-struct Child(u32);
-
 #[derive(Clone, Debug, PartialEq, Eq, GBoxed)]
 #[gboxed(type_name = "TreeKeyWrapper")]
 struct TreeKeyWrapper(Box<TreeKey>);
 
-
 fn main() -> anyhow::Result<()> {
     let universe = Universe::new();
     let editor_world = Rc::new(RefCell::new(EditorWorld::new(universe.create_world())));
-    let root = editor_world.borrow().scene_graph.tree().root();
     let resources = Rc::new(RefCell::new(Resources::default()));
+    let renderer = RendererSystem::system();
+    let schedule = Rc::new(RefCell::new(Schedule::builder().add_thread_local(renderer).build()));
 
-    let mut component_registry = Vec::new();
-    let tmp = core_components::Transform::from_defaults();
-    component_registry.push(tmp.as_component_representation());
+    let root = editor_world.borrow().scene_graph.tree().root();
+    let color_buffer = Rc::new(ColorBuffer::from_color(na::Vector3::new(0.3, 0.3, 0.5)));
 
     let builder = build_ui(editor_world.clone(), root)?;
 
+    let window: gtk::Window = builder.get_object("window_main").unwrap();
     let gl_area: gtk::GLArea = builder.get_object("gl_area").unwrap();
 
-    gl_area.connect_realize(|area| {
-        area.set_required_version(4, 5)
-    });
-
-    gl_area.make_current();
     epoxy::load_with(|s| {
         unsafe {
             match DynamicLibrary::open(None).unwrap().symbol(s) {
@@ -377,38 +188,65 @@ fn main() -> anyhow::Result<()> {
     });
 
     gl::load_with(epoxy::get_proc_addr);
+    gl_area.set_required_version(4, 5);
 
-    let width = gl_area.get_allocated_width();
-    let height = gl_area.get_allocated_height();
-    let viewport = Rc::new(RefCell::new(Viewport::for_window(width, height)));
-    viewport.borrow().set_used();
+    gl_area.connect_realize(clone!(@strong resources, @strong color_buffer => move |area| {
+        area.make_current();
+        area.set_auto_render(false);
 
-    let color_buffer = ColorBuffer::from_color(na::Vector3::new(0.3, 0.3, 0.5));
-    color_buffer.set_used();
+        let (maj, min) = area.get_required_version();
+        println!("OPENGL VERSION: {}.{}", maj, min);
+        area.set_has_depth_buffer(true);
 
-    gl_area.connect_realize(|_| {
         unsafe {
-            gl::Enable(gl::DEPTH_TEST);
+            // gl::Enable(gl::DEPTH_TEST);
             gl::Enable(gl::DEBUG_OUTPUT);
 
             gl::DebugMessageCallback(Some(gl::error_callback), std::ptr::null())
         }
-    });
 
-    gl_area.connect_resize(clone!(@strong viewport => move |_, w, h| {
-        viewport.borrow_mut().update_size(w, h);
-        viewport.borrow().set_used();
+        // let width = gl_area.get_allocated_width();
+        // let height = gl_area.get_allocated_height();
+        // let viewport = Rc::new(RefCell::new(Viewport::for_window(width, height)));
+        // viewport.borrow().set_used();
+
+        color_buffer.set_used();
+
+        let program = ProgramLoader::new().load("resources/shaders/basic").unwrap();
+        let lights_block = InterfaceBlock::<Lights>::new(&program, "Lights", 1);
+        let matrices_block = InterfaceBlock::<Matrices>::new(&program, "Matrices", 2);
+        let material_block = InterfaceBlock::<core_components::material::Basic>::new(&program, "Material", 3);
+
+        resources.borrow_mut().insert(program);
+        resources.borrow_mut().insert(lights_block);
+        resources.borrow_mut().insert(matrices_block);
+        resources.borrow_mut().insert(material_block);
     }));
 
-    let renderer = RendererSystem::system();
-    let schedule = Rc::new(RefCell::new(Schedule::builder().add_thread_local(renderer).build()));
+    // gl_area.connect_resize(clone!(@strong viewport => move |_, w, h| {
+    //     viewport.borrow_mut().update_size(w, h);
+    //     viewport.borrow().set_used();
+    // }));
 
-    gl_area.connect_render(clone!(@strong editor_world, @strong resources, @strong schedule => move |_, _| {
+
+    gl_area.connect_render(clone!(@strong editor_world, @strong resources, @strong schedule, @strong resources, @strong color_buffer => move |area, _| {
         color_buffer.clear();
-        // schedule.borrow_mut().execute(&mut editor_world.borrow_mut().world, &mut resources.borrow_mut());
+        schedule.borrow_mut().execute(&mut editor_world.borrow_mut().world, &mut resources.borrow_mut());
         Inhibit(false)
     }));
 
+
+    gl_area.add_tick_callback(move |area, _| {
+        area.queue_render();
+        Continue(true)
+    });
+
+    // timeout_add(20, move || {
+    //     gl_area.queue_render();
+    //     Continue(true)
+    // });
+
+    window.show_all();
     gtk::main();
 
     Ok(())
@@ -425,13 +263,14 @@ fn build_ui(editor_world: Rc<RefCell<EditorWorld>>, root: TreeKey) -> anyhow::Re
     let tree: gtk::TreeView = builder.get_object("scene_graph").unwrap();
     let button_add: gtk::Button = builder.get_object("button_add").unwrap();
     let button_remove: gtk::Button = builder.get_object("button_remove").unwrap();
+    let button_remove_component: gtk::Button = builder.get_object("button_remove_component").unwrap();
     let cell_renderer: gtk::CellRendererText = builder.get_object("cell_renderer_entity_name").unwrap();
     let paned: gtk::Paned = builder.get_object("paned2").unwrap();
     let component_view: TreeView = builder.get_object("component_view").unwrap();
     let component_selection = component_view.get_selection();
 
     {
-        let src = include_str!("component_none.glade");
+        let src = include_str!("editor_components/component_none.glade");
         let build = gtk::Builder::from_string(src);
         let frame: gtk::Frame = build.get_object("empty_frame").unwrap();
         paned.add2(&frame);
@@ -447,10 +286,7 @@ fn build_ui(editor_world: Rc<RefCell<EditorWorld>>, root: TreeKey) -> anyhow::Re
     let model = tree.get_model().unwrap();
 
     for i in 0..4 {
-        let handle = editor_world.borrow_mut().add_entity(root, format!("Child {}", i))?;
-        let entity = editor_world.borrow().scene_graph.tree().value(handle).unwrap().clone();
-        editor_world.borrow_mut().add_component(entity, Empty)?;
-        editor_world.borrow_mut().add_component(entity, Transform::from_defaults())?;
+      editor_world.borrow_mut().add_entity(root, format!("Dummy Entity {}", i))?;
     }
 
     let root_key = Rc::new(root);
@@ -461,6 +297,66 @@ fn build_ui(editor_world: Rc<RefCell<EditorWorld>>, root: TreeKey) -> anyhow::Re
         gtk::main_quit();
         Inhibit(false)
     });
+
+    let global_component_listbox: gtk::ListBox = builder.get_object("component_listbox").unwrap();
+
+    let mut component_registry = Vec::new();
+    let mut component_buttons = Vec::new();
+    let mut component_listboxrows = Vec::new();
+    component_registry.push(core_components::Transform::component_representation());
+    component_registry.push(core_components::Camera::component_representation());
+    component_registry.push(core_components::light::PointLight::component_representation());
+    component_registry.push(core_components::IndexedMesh::component_representation());
+    component_registry.push(core_components::material::Basic::component_representation());
+
+    let gl_area: gtk::GLArea = builder.get_object("gl_area").unwrap();
+
+    for component in component_registry {
+        let button = gtk::Button::with_label(&component.name());
+        button.connect_clicked(clone!(@strong editor_world, @strong tree_selection, @strong component_list, @strong gl_area => move |_| {
+            gl_area.make_current();
+            let s = tree_selection.get_selected();
+            let key = match &s {
+                Some((model, iter)) => {
+                    let v = model.get_value(&iter, 1);
+                    let k = v.get::<&TreeKeyWrapper>().unwrap().unwrap();
+                    *k.0
+                },
+                None => return
+            };
+
+            let entity = editor_world.borrow().scene_graph.tree().value(key).unwrap().clone();
+            let func = component.insert_func();
+            (func)(&mut editor_world.borrow_mut(), entity);
+
+            component_list.clear();
+            let e_world = editor_world.borrow();
+            let components = e_world.world.get_component::<ComponentVisualization>(entity).unwrap();
+
+            for (i, comp) in components.components.iter().enumerate() {
+                component_list.insert_with_values(
+                    None,
+                    &[0, 1],
+                    &[&comp.name(), &(i as u64)]
+                );
+            }
+        }));
+
+        component_buttons.push(button);
+    }
+
+    for button in component_buttons.iter() {
+        let row = gtk::ListBoxRow::new();
+        row.add(button);
+
+        component_listboxrows.push(row);
+    }
+
+    for row in component_listboxrows.iter() {
+        global_component_listbox.add(row);
+    }
+
+    global_component_listbox.show_all();
 
     button_add.connect_clicked(clone!(@strong editor_world, @strong store, @strong tree_selection, @strong root_key => move |_| {
         let s = tree_selection.get_selected();
@@ -542,7 +438,7 @@ fn build_ui(editor_world: Rc<RefCell<EditorWorld>>, root: TreeKey) -> anyhow::Re
                 i
             },
             None => {
-                let src = include_str!("component_none.glade");
+                let src = include_str!("editor_components/component_none.glade");
                 let builder = gtk::Builder::from_string(src);
                 let frame: gtk::Frame = builder.get_object("empty_frame").unwrap();
                 paned.add2(&frame);
@@ -559,7 +455,7 @@ fn build_ui(editor_world: Rc<RefCell<EditorWorld>>, root: TreeKey) -> anyhow::Re
                 *k.0
             },
             None => {
-                let src = include_str!("component_none.glade");
+                let src = include_str!("editor_components/component_none.glade");
                 let builder = gtk::Builder::from_string(src);
                 let frame: gtk::Frame = builder.get_object("empty_frame").unwrap();
                 paned.add2(&frame);
@@ -592,6 +488,5 @@ fn build_ui(editor_world: Rc<RefCell<EditorWorld>>, root: TreeKey) -> anyhow::Re
         (func)(editor_world.clone(), entity, &paned);
     }));
 
-    window.show_all();
     Ok(builder)
 }
