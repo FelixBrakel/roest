@@ -17,6 +17,10 @@ impl EditorComponent for Camera {
             world.add_component(entity, Camera::default()).unwrap();
         };
 
+        // let remove_func = |world: &mut EditorWorld, entity| {
+        //     world.remove_component(entity).unwrap();
+        // };
+
         // TODO: Build UI for Camera component
         let ui_func = |world: Rc<RefCell<EditorWorld>>, entity: Entity, paned: &gtk::Paned| {
             let src = include_str!("component_none.glade");

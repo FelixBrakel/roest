@@ -1,4 +1,4 @@
-use legion::entity::Entity;
+use legion::Entity;
 use std::fmt;
 use std::collections::HashMap;
 use serde::de::{DeserializeSeed, Visitor, SeqAccess, Error};
@@ -61,7 +61,7 @@ impl<'de> DeserializeSeed<'de> for DeMap {
 
 
                 let tree = uuid_tree.map(
-                    |_, node| self.0.entity_map.get(node).unwrap().clone()
+                    |node| self.0.entity_map.get(node).unwrap().clone()
                 );
 
                 Ok(SceneGraph { tree })
@@ -78,7 +78,7 @@ impl Serialize for SerSceneGraph {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut ser = serializer.serialize_struct("SceneGraph", 2)?;
         let uuid_graph  = self.scene_graph.tree.map(
-            |_, node| self.entity_map.get(node).unwrap().clone(),
+            |node| self.entity_map.get(node).unwrap().clone(),
         );
 
         ser.serialize_field("graph", &uuid_graph)?;

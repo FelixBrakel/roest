@@ -6,136 +6,6 @@ new_key_type! {
     pub struct TreeKey;
 }
 
-pub struct SecondaryTree<T>(SecondaryMap<TreeKey, T>);
-
-impl<T> SecondaryTree<T> {
-    pub fn new() -> Self {
-        SecondaryTree(SecondaryMap::new())
-    }
-
-    pub fn get(&self, node: TreeKey) -> Option<&T> {
-        self.0.get(node)
-    }
-
-    pub fn insert(&mut self, node: TreeKey, value: T) {
-        self.0.insert(node, value);
-    }
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct Tree<T: Copy> {
-    root: TreeKey,
-    values: SlotMap<TreeKey, T>,
-    // NOTE: The Vec<TreeKey> does not implement Copy so it has to be in a separate SecondaryMap, this can be changed
-    //       once Copy is no longer a supertrait for Slottable
-    children: SecondaryMap<TreeKey, Vec<TreeKey>>
-}
-
-#[derive(Debug, Error)]
-pub enum TreeError {
-    #[error("Tree is out of empty space")]
-    OutOfSpace,
-    #[error("Parent does not exist")]
-    InvalidParent,
-}
-
-impl<T: Copy> Tree<T> {
-    pub fn new(root: T) -> Self {
-        let mut values = SlotMap::with_key();
-        let r = values.insert(root);
-        let mut secondary = SecondaryMap::new();
-        secondary.insert(r, Vec::new());
-
-        Tree {
-            root: r,
-            values,
-            children: secondary
-        }
-    }
-
-    pub fn add_child(&mut self, parent: TreeKey, child: T) -> Result<TreeKey, TreeError> {
-        let idx = match self.children.get_mut(parent) {
-            Some(p) => {
-                let i = self.values.insert(child);
-                p.push(i);
-                self.children.insert(i, Vec::new());
-                i
-            },
-            None => { return Err(TreeError::InvalidParent) }
-        };
-
-        Ok(idx)
-    }
-
-    pub fn remove_tree(&mut self, node: TreeKey) -> Vec<Option<T>> {
-        let mut out = Vec::new();
-        out.push(self.values.remove(node));
-        let tree = match self.children.get(node) {
-            Some(t) => t.clone(),
-            None => return out
-        };
-
-        for t in tree {
-            out.extend(self.remove_tree(t));
-        }
-
-        self.children.remove(node);
-
-        out
-    }
-
-    /// Maps the tree to a SecondaryTree in which all the keys from the current tree are still valid
-    pub fn map_to_secondary<T2, F>(&self, mut map_func: F) -> SecondaryTree<T2>
-        where F: FnMut(TreeKey, &T) -> T2 {
-        let mut tree = SecondaryTree ( SecondaryMap::new() );
-
-        for k in self.values.keys() {
-            let v = self.values.get(k).unwrap();
-            let new_val = map_func(k, v);
-            tree.0.insert(k, new_val);
-        }
-
-        tree
-    }
-
-    /// Maps the tree to a new tree, here the keys from the current tree are not valid.
-    pub fn map<T2: Copy, F>(&self, mut map_func: F) -> Tree<T2>
-        where F: FnMut(TreeKey, &T) -> T2
-    {
-        let root = self.values.get(self.root).unwrap();
-        let mut tree = Tree::new(map_func(self.root, root));
-
-        self.map_children_rec(&mut tree, self.root, &mut map_func);
-
-        tree
-    }
-
-    fn map_children_rec<T2: Copy, F>(&self, tree: &mut Tree<T2>, node: TreeKey, map_func: &mut F)
-        where F: FnMut(TreeKey, &T) -> T2
-    {
-        let ch = self.children(node).unwrap();
-        for c in ch {
-            tree.add_child(node, map_func(*c, self.value(*c).unwrap())).unwrap();
-            self.map_children_rec(tree, *c, map_func)
-        }
-    }
-
-    pub fn children(&self, parent: TreeKey) -> Option<&[TreeKey]> {
-        match self.children.get(parent) {
-            Some(c) => Some(c),
-            None => None
-        }
-    }
-
-    pub fn value(&self, node: TreeKey) -> Option<&T> {
-        self.values.get(node)
-    }
-
-    pub fn root(&self) -> TreeKey {
-        self.root
-    }
-}
-
 #[derive(Serialize, Deserialize)]
 pub struct TreeNode<T> {
     children: Vec<TreeKey>,
@@ -172,6 +42,128 @@ impl<T> TreeNode<T> {
 
     pub fn get_val(&self) -> &T {
         &self.val
+    }
+}
+
+pub struct SecondaryTree<T>(SecondaryMap<TreeKey, T>);
+
+impl<T> SecondaryTree<T> {
+    pub fn new() -> Self {
+        SecondaryTree(SecondaryMap::new())
+    }
+
+    pub fn get(&self, node: TreeKey) -> Option<&T> {
+        self.0.get(node)
+    }
+
+    pub fn insert(&mut self, node: TreeKey, value: T) {
+        self.0.insert(node, value);
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum TreeError {
+    #[error("Tree is out of empty space")]
+    OutOfSpace,
+    #[error("Parent does not exist")]
+    InvalidParent,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Tree<T> {
+    root: TreeKey,
+    nodes: SlotMap<TreeKey, TreeNode<T>>,
+}
+
+impl<T> Tree<T> {
+    pub fn new(root: T) -> Self {
+        let mut nodes = SlotMap::with_key();
+        let r = nodes.insert(TreeNode::new(root));
+
+        Tree {
+            root: r,
+            nodes,
+        }
+    }
+
+    pub fn add_child(&mut self, parent: TreeKey, child: T) -> Result<TreeKey, TreeError> {
+        if !self.nodes.contains_key(parent) {
+            return Err(TreeError::InvalidParent)
+        }
+        let new_key = self.nodes.insert(TreeNode::new(child));
+
+        let node = self.nodes.get_mut(parent).unwrap();
+        node.children.push(new_key);
+        Ok(new_key)
+    }
+
+    pub fn remove_tree(&mut self, key: TreeKey) -> Vec<T> {
+        let mut node = self.nodes.remove(key);
+
+        let mut out = Vec::new();
+
+        let mut children = Vec::new();
+        while let Some(n) = node {
+            out.push(n.val);
+            children.extend(n.children);
+            let child = children.pop();
+            node = match child {
+                Some(ch) => self.nodes.remove(ch),
+                None => None
+            };
+        }
+
+        return out;
+    }
+
+    /// Attach a secondary data storage to the tree. Keys from the original are still valid
+    pub fn map_to_secondary<T2, F>(&self, mut map_func: F) -> SecondaryTree<T2>
+        where F: FnMut(&T) -> T2 {
+        let mut tree = SecondaryTree ( SecondaryMap::new() );
+
+        for k in self.nodes.keys() {
+            let v = self.nodes.get(k).unwrap();
+            let new_val = map_func(&v.val);
+            tree.0.insert(k, new_val);
+        }
+
+        tree
+    }
+
+    /// Maps the tree to a new tree, here the keys from the current tree are not valid.
+    pub fn map<T2: Copy, F>(&self, mut map_func: F) -> Tree<T2>
+        where F: FnMut(&T) -> T2
+    {
+        let root = &self.nodes.get(self.root).unwrap().val;
+        let mut tree = Tree::new(map_func(root));
+
+        self.map_children_rec(&mut tree, self.root, &mut map_func);
+
+        tree
+    }
+
+    fn map_children_rec<T2: Copy, F>(&self, tree: &mut Tree<T2>, node: TreeKey, map_func: &mut F)
+        where F: FnMut(&T) -> T2
+    {
+        let n = self.nodes.get(node).unwrap();
+        for c in &n.children {
+            tree.add_child(node, map_func(self.value(*c).unwrap())).unwrap();
+            self.map_children_rec(tree, *c, map_func)
+        }
+    }
+
+    pub fn children(&self, parent: TreeKey) -> Option<&[TreeKey]> {
+        let node = self.nodes.get(parent)?;
+
+        Some(&node.children)
+    }
+
+    pub fn value(&self, node: TreeKey) -> Option<&T> {
+        self.nodes.get(node).map(|n| &n.val)
+    }
+
+    pub fn root(&self) -> TreeKey {
+        self.root
     }
 }
 

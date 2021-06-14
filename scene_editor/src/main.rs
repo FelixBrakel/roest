@@ -18,9 +18,9 @@ use roest_runtime::{
     },
     core_components,
     core_systems::{
-        renderer::RendererSystem,
         resource_manager::data_loaders::ProgramLoader
-    }
+    },
+    create_gl_window
 };
 
 use legion::{
@@ -122,6 +122,17 @@ impl EditorWorld {
         self.world.add_component(entity, component)
     }
 
+    pub fn remove_component<T>(&mut self, entity: Entity) -> Result<(), EntityMutationError>
+    where
+        T: EditorComponent
+    {
+        //TODO: make this not an array but a hashmap for easy removal.
+        //let mut vis_comp = self.world.get_component_mut::<ComponentVisualization>(entity).unwrap();
+        //let repr = T::component_representation();
+        //vis_comp.components.remove();
+        self.world.remove_component::<T>(entity)
+    }
+
     pub fn insert_into_tree_store(&self, store: &TreeStore) {
         let tree = self.scene_graph.tree();
         let root = self.scene_graph.tree().root();
@@ -167,8 +178,7 @@ fn main() -> anyhow::Result<()> {
     let universe = Universe::new();
     let editor_world = Rc::new(RefCell::new(EditorWorld::new(universe.create_world())));
     let resources = Rc::new(RefCell::new(Resources::default()));
-    let renderer = RendererSystem::system();
-    let schedule = Rc::new(RefCell::new(Schedule::builder().add_thread_local(renderer).build()));
+    let render_schedule = Rc::new(RefCell::new(Schedule::builder().add_thread_local().build()));
 
     let root = editor_world.borrow().scene_graph.tree().root();
     let color_buffer = Rc::new(ColorBuffer::from_color(na::Vector3::new(0.3, 0.3, 0.5)));
@@ -176,73 +186,78 @@ fn main() -> anyhow::Result<()> {
     let builder = build_ui(editor_world.clone(), root)?;
 
     let window: gtk::Window = builder.get_object("window_main").unwrap();
-    let gl_area: gtk::GLArea = builder.get_object("gl_area").unwrap();
+    create_gl_window();
+    let program = ProgramLoader::new().load("resources/shaders/basic").unwrap();
+    let lights_block = InterfaceBlock::<Lights>::new(&program, "Lights", 1);
+    let matrices_block = InterfaceBlock::<Matrices>::new(&program, "Matrices", 2);
+    let material_block = InterfaceBlock::<core_components::material::Basic>::new(&program, "Material", 3);
 
-    epoxy::load_with(|s| {
-        unsafe {
-            match DynamicLibrary::open(None).unwrap().symbol(s) {
-                Ok(v) => v,
-                Err(_) => std::ptr::null(),
-            }
-        }
-    });
+    resources.borrow_mut().insert(program);
+    resources.borrow_mut().insert(lights_block);
+    resources.borrow_mut().insert(matrices_block);
+    resources.borrow_mut().insert(material_block);
 
-    gl::load_with(epoxy::get_proc_addr);
-    gl_area.set_required_version(4, 5);
+    // let gl_area: gtk::GLArea = builder.get_object("gl_area").unwrap();
 
-    gl_area.connect_realize(clone!(@strong resources, @strong color_buffer => move |area| {
-        area.make_current();
-        area.set_auto_render(false);
+    // epoxy::load_with(|s| {
+    //     unsafe {
+    //         match DynamicLibrary::open(None).unwrap().symbol(s) {
+    //             Ok(v) => v,
+    //             Err(_) => std::ptr::null(),
+    //         }
+    //     }
+    // });
 
-        let (maj, min) = area.get_required_version();
-        println!("OPENGL VERSION: {}.{}", maj, min);
-        area.set_has_depth_buffer(true);
+    // gl::load_with(epoxy::get_proc_addr);
+    // gl_area.set_required_version(4, 5);
 
-        unsafe {
+    // gl_area.connect_realize(clone!(@strong resources, @strong color_buffer => move |area| {
+    //     area.make_current();
+    //     area.set_auto_render(false);
+    //
+    //     let (maj, min) = area.get_required_version();
+    //     println!("OPENGL VERSION: {}.{}", maj, min);
+    //     area.set_has_depth_buffer(true);
+    //
+    //     unsafe {
             // gl::Enable(gl::DEPTH_TEST);
-            gl::Enable(gl::DEBUG_OUTPUT);
-
-            gl::DebugMessageCallback(Some(gl::error_callback), std::ptr::null())
-        }
+            // gl::Enable(gl::DEBUG_OUTPUT);
+            //
+            // gl::DebugMessageCallback(Some(gl::error_callback), std::ptr::null())
+        // }
 
         // let width = gl_area.get_allocated_width();
         // let height = gl_area.get_allocated_height();
         // let viewport = Rc::new(RefCell::new(Viewport::for_window(width, height)));
         // viewport.borrow().set_used();
 
-        color_buffer.set_used();
+        // color_buffer.set_used();
 
-        let program = ProgramLoader::new().load("resources/shaders/basic").unwrap();
-        let lights_block = InterfaceBlock::<Lights>::new(&program, "Lights", 1);
-        let matrices_block = InterfaceBlock::<Matrices>::new(&program, "Matrices", 2);
-        let material_block = InterfaceBlock::<core_components::material::Basic>::new(&program, "Material", 3);
-
-        resources.borrow_mut().insert(program);
-        resources.borrow_mut().insert(lights_block);
-        resources.borrow_mut().insert(matrices_block);
-        resources.borrow_mut().insert(material_block);
-    }));
+        // let program = ProgramLoader::new().load("resources/shaders/basic").unwrap();
+        // let lights_block = InterfaceBlock::<Lights>::new(&program, "Lights", 1);
+        // let matrices_block = InterfaceBlock::<Matrices>::new(&program, "Matrices", 2);
+        // let material_block = InterfaceBlock::<core_components::material::Basic>::new(&program, "Material", 3);
+        //
+        // resources.borrow_mut().insert(program);
+        // resources.borrow_mut().insert(lights_block);
+        // resources.borrow_mut().insert(matrices_block);
+        // resources.borrow_mut().insert(material_block);
+    // }));
 
     // gl_area.connect_resize(clone!(@strong viewport => move |_, w, h| {
     //     viewport.borrow_mut().update_size(w, h);
     //     viewport.borrow().set_used();
     // }));
 
+    // gl_area.connect_render(clone!(@strong editor_world, @strong resources, @strong render_schedule, @strong resources, @strong color_buffer => move |area, _| {
+    //     color_buffer.clear();
+    //     render_schedule.borrow_mut().execute(&mut editor_world.borrow_mut().world, &mut resources.borrow_mut());
+    //     Inhibit(false)
+    // }));
 
-    gl_area.connect_render(clone!(@strong editor_world, @strong resources, @strong schedule, @strong resources, @strong color_buffer => move |area, _| {
-        color_buffer.clear();
-        schedule.borrow_mut().execute(&mut editor_world.borrow_mut().world, &mut resources.borrow_mut());
-        Inhibit(false)
-    }));
-
-
-    gl_area.add_tick_callback(move |area, _| {
-        area.queue_render();
-        Continue(true)
-    });
-
-    // timeout_add(20, move || {
-    //     gl_area.queue_render();
+    //NOTE: this is temporary until I figure out how to queue renders from an update loop.
+    // gl_area.add_tick_callback(move |area, _| {
+    //     area.queue_render();
     //     Continue(true)
     // });
 

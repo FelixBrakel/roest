@@ -3,7 +3,7 @@ mod core_systems;
 mod core_components;
 
 pub mod core_resources;
-use legion::prelude::*;
+use legion::*;
 
 use anyhow::{
     Result,
@@ -80,8 +80,7 @@ fn run() -> Result<(), anyhow::Error> {
 
     let mut viewport = Viewport::for_window(900, 700);
     viewport.set_used();
-    let universe = Universe::new();
-    let mut world = universe.create_world();
+    let mut world = World::default();
 
     let transform = core_components::Transform::new(
         1.,
@@ -122,58 +121,46 @@ fn run() -> Result<(), anyhow::Error> {
     let color_buffer = ColorBuffer::from_color(na::Vector3::new(0.3, 0.3, 0.5));
     color_buffer.set_used();
 
-    let renderer = core_systems::RendererSystem::system();
-
     let mut resources = Resources::default();
     resources.insert(program);
     resources.insert(lights_block);
     resources.insert(matrices_block);
     resources.insert(material_block);
 
-    let entity = vec![
+
+    world.push(
         (
             transform,
             penguin_material,
             teapot_loader.load("resources/meshes/penguin.mesh").unwrap()
         )
-    ];
-
-    world.insert(
-        (),
-        entity
     );
 
-    world.insert(
-        (),
-        (0..1).map(
-            |i| (
-                Transform::new(1., na::Vector3::new(-1., 0.5, -1.2), na::UnitQuaternion::from_euler_angles(0., 0., 0.)),
-                PointLight {
-                    constant: 1.,
-                    linear: 0.35,
-                    quadratic: 0.44,
-                    ambient: na::Vector3::new(0.2, 0.2, 0.2),
-                    diffuse: na::Vector3::new(0.662, 0.450, 0.137),
-                    specular: na::Vector3::new(1.0, 1.0, 1.0)
-                }
-                )
+    world.push(
+        (
+            Transform::new(1., na::Vector3::new(-1., 0.5, -1.2), na::UnitQuaternion::from_euler_angles(0., 0., 0.)),
+            PointLight {
+                constant: 1.,
+                linear: 0.35,
+                quadratic: 0.44,
+                ambient: na::Vector3::new(0.2, 0.2, 0.2),
+                diffuse: na::Vector3::new(0.662, 0.450, 0.137),
+                specular: na::Vector3::new(1.0, 1.0, 1.0)
+            }
         )
     );
 
-    world.insert(
-        (),
-        (0..1).map(
-            |i| (
-                Transform::new(1., na::Vector3::new(1., 0., -1.2), na::UnitQuaternion::from_euler_angles(0., 0., 0.)),
-                PointLight {
-                    constant: 1.,
-                    linear: 0.35,
-                    quadratic: 0.44,
-                    ambient: na::Vector3::new(0.2, 0.2, 0.2),
-                    diffuse: na::Vector3::new(0.266, 0.470, 0.678),
-                    specular: na::Vector3::new(1.0, 1.0, 1.0)
-                }
-            )
+    world.push(
+        (
+            Transform::new(1., na::Vector3::new(1., 0., -1.2), na::UnitQuaternion::from_euler_angles(0., 0., 0.)),
+            PointLight {
+                constant: 1.,
+                linear: 0.35,
+                quadratic: 0.44,
+                ambient: na::Vector3::new(0.2, 0.2, 0.2),
+                diffuse: na::Vector3::new(0.266, 0.470, 0.678),
+                specular: na::Vector3::new(1.0, 1.0, 1.0)
+            }
         )
     );
 
@@ -207,14 +194,10 @@ fn run() -> Result<(), anyhow::Error> {
         na::Vector3::new(0., 0., 0.),
         na::UnitQuaternion::from_euler_angles(0., 0., 0.)
     );
-
-    world.insert(
-        (),
-        (0..1).map(|_| (camera, cam_transform))
-    );
+    world.push((camera, cam_transform));
 
     let mut schedule = Schedule::builder()
-        .add_thread_local(renderer)
+        .add_thread_local(core_systems::renderer::render_system())
         .build();
 
     let mut event_pump = sdl.event_pump().map_err(|err|anyhow!(err))?;
@@ -227,7 +210,7 @@ fn run() -> Result<(), anyhow::Error> {
                     ..
                 } => {
                     viewport.update_size(w, h);
-                    let cam_query = <(Write<core_components::Camera>,)>::query();
+                    let mut cam_query = <(Write<core_components::Camera>,)>::query();
 
                     for (mut camera,) in cam_query.iter_mut(&mut world) {
                         camera.update_perspective(
@@ -243,7 +226,7 @@ fn run() -> Result<(), anyhow::Error> {
                 _ => {},
             }
         }
-        let query = <(Write<core_components::Transform>, Read<core_components::IndexedMesh>)>::query();
+        let mut query = <(Write<core_components::Transform>, Read<core_components::IndexedMesh>)>::query();
 
         for (mut transform, _) in query.iter_mut(&mut world) {
             transform.rotate_by(0., 0.01, 0.);

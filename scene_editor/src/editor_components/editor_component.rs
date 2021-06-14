@@ -13,14 +13,20 @@ use crate::EditorWorld;
 pub struct ComponentRepresentation {
     name: String,
     insert_func: fn(&mut EditorWorld, Entity),
+    // remove_func: fn(&mut EditorWorld, Entity),
     ui_func: fn(Rc<RefCell<EditorWorld>>, Entity, &Paned)
 }
 
 impl ComponentRepresentation {
-    pub fn new(name: String, insert_func: fn(&mut EditorWorld, Entity), ui_func: fn(Rc<RefCell<EditorWorld>>, Entity, &Paned)) -> ComponentRepresentation {
+    pub fn new(
+        name: String,
+        insert_func: fn(&mut EditorWorld, Entity),
+        // remove_func: fn(&mut EditorWorld, Entity),
+        ui_func: fn(Rc<RefCell<EditorWorld>>, Entity, &Paned)) -> ComponentRepresentation {
         ComponentRepresentation {
             name,
             insert_func,
+            // remove_func,
             ui_func
         }
     }
