@@ -17,6 +17,8 @@ use gl_renderer::uniform_buffer::InterfaceBlock;
 use nalgebra::{U3};
 use nalgebra as na;
 use gl_renderer::light::PointLight as GPUPointLight;
+mod pipeline_stage;
+
 
 #[system]
 pub fn render(
